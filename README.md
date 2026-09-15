@@ -6,4 +6,5 @@ Repositorio del grupo para la realización y entrega de ejercicios y prácticas 
 - IvoDev14
 - nevillegil
 - alonsoo-cmd
+- sergiomadrz
 - antoniomachuca
