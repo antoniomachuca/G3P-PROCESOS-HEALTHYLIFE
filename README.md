@@ -8,4 +8,5 @@ Repositorio del grupo para la realización y entrega de ejercicios y prácticas 
 - alonsoo-cmd
 - sergiomadrz
 - saraguillenmtz
+- dianalopezlozano
 - antoniomachuca
