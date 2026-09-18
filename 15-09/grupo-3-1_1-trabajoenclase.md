@@ -36,13 +36,13 @@ En el caso B elegimos ágil:
 - Es mas facil recibir el feedback de los "stakeholders"
   
 ### Uso IA:
--Requisitos: como el cliente cambia mucho de opinión, usaremos la IA para resumir reuniones y sacar requisitos. Tendrá supervisión total porque si la IA se inventa algún requisito, se cae el proyecto.
--Diseño: le daremos una supervisión parcial, como la plataforma del chatbot cambia cada pocas semanas y no tenemos ningún producto de referencia, le pediremos a la IA ideas de como enfocar el diseño, pero la decisión final la tomamos nosotros.
--Implementación:para el código usaremos supervisión parcial, como tenemos la demo en dos meses, nos viene bien que la IA nos pique el código de los componentes visuales para avanzar rápido. Con estar un poco pendientes y revisarlo nosotros nos sirve.
+- Requisitos: como el cliente cambia mucho de opinión, usaremos la IA para resumir reuniones y sacar requisitos. Tendrá supervisión total porque si la IA se inventa algún requisito, se cae el proyecto.
+- Diseño: le daremos una supervisión parcial, como la plataforma del chatbot cambia cada pocas semanas y no tenemos ningún producto de referencia, le pediremos a la IA ideas de como enfocar el diseño, pero la decisión final la tomamos nosotros.
+- Implementación:para el código usaremos supervisión parcial, como tenemos la demo en dos meses, nos viene bien que la IA nos pique el código de los componentes visuales para avanzar rápido. Con estar un poco pendientes y revisarlo nosotros nos sirve.
 Pruebas: las creará la IA con autonomía alta. Tenemos un plazo muy cerrado y necesitamos que la IA genere los tests muy rápido y en gran cantidad para asegurarnos de que nada falle en la demo.
-Despliegue: usaremos supervisión total, si algo falla en la demo se cae el contrato, por lo que no podemos arreisgarnos a que la IA suba cosas por si sola.
--Mantenimiento:se hará con la ayuda de la IA con supervisión parcial. Como la plataforma cambia cada pocas semanas y las cosas pueden dejar de funcionar, la usaremos para que nos ayude a encontrar los errores rápidamente.
--La actividad que nunca dejaríamos en autonomía alta es el despliegue, queremos tener todo el control de las versiones que publicamos.
+- Despliegue: usaremos supervisión total, si algo falla en la demo se cae el contrato, por lo que no podemos arreisgarnos a que la IA suba cosas por si sola.
+- Mantenimiento:se hará con la ayuda de la IA con supervisión parcial. Como la plataforma cambia cada pocas semanas y las cosas pueden dejar de funcionar, la usaremos para que nos ayude a encontrar los errores rápidamente.
+- La actividad que nunca dejaríamos en autonomía alta es el despliegue, queremos tener todo el control de las versiones que publicamos.
 
 ### Estimación de entregas y planificación release
 Hay fecha de entrega de 2 meses para la demo, como el cliente cambia de opinión a menudo pensamos hacer releases cortas de 1 o 2 semanas.
