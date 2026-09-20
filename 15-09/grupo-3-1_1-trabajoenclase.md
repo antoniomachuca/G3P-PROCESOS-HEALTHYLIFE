@@ -53,3 +53,6 @@ Sin la IA sería casi imposible llegar a tiempo a la demo, ya que al dejar que s
 
 
 ## IDENTIFICACION DE DIFERENCIAS
+La principal diferencia entre ambos casos es el ciclo de vida elegido. En el Caso A utilizamos un modelo híbrido, ya que necesitamos cierta iteración para descubrir qué funcionalidades utilizan realmente los usuarios, pero también un mayor control en aspectos como la seguridad y las pruebas. En cambio, en el Caso B utilizamos un modelo ágil, porque los requisitos cambian constantemente, el cliente da feedback frecuente y la plataforma evoluciona cada pocas semanas.
+
+Además, en el Caso A no tenemos una fecha de entrega externa, mientras que en el Caso B tenemos una demo en dos meses, lo que obliga a realizar releases más cortas y frecuentes.
