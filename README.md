@@ -48,6 +48,21 @@ Hasta que eso esté hecho, las ramas se crean en local con la clave de la issue 
 
 `contracts/eventos.ejemplo.json` es el mock de intercambio. Los identificadores de usuario (`userId`), grupo (`communityGroupId`) y rutina (`routineId`) son strings opacos de E1, E4 y E5. Este módulo no implementa sus pantallas.
 
+## Datos
+
+`data/eventos.json` es la semilla, con la misma forma que `contracts/eventos.ejemplo.json`. El contrato público sigue llamando al aforo `aforoMaximo` y `plazasDisponibles`.
+
+La migración de G3P-33 crea la base SQLite `data/e3.sqlite` (no se versiona). En las tablas los campos de aforo se llaman `capacidad` y `plazas_libres`. El estado del evento es `abierta`, `cancelada` o `finalizada`. El estado de la reserva es `confirmada`, `en_espera`, `cancelada`, `asistida` o `no_presentado`.
+
+Desde `apps/api`, con Node 22.18 o superior (TypeScript se ejecuta directamente, sin dependencias):
+
+```bash
+npm test
+npm run migrate
+```
+
+`npm test` comprueba el esquema en memoria. `npm run migrate` aplica `001_eventos_y_reservas.sql` y carga la semilla. Bajar las plazas al reservar es la historia siguiente: esta migración solo deja el aforo guardado y acotado (no negativo y nunca por encima de la capacidad).
+
 ## Estado del código
 
-El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. Aún no hay aplicación en el repositorio: el primer incremento se implementa a partir de las historias que el equipo meta en el sprint (las de consulta, HU-01 y HU-02, no dependen de los demás módulos).
+El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. La API de consulta y la interfaz aún no están. G3P-33 deja el modelo de eventos y reservas en SQLite para la inscripción de HU-12.
