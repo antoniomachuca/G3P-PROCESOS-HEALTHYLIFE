@@ -61,7 +61,7 @@ npm test
 npm run migrate
 ```
 
-`npm test` comprueba el esquema y la reserva. `npm run migrate` aplica la migración y carga la semilla. `npm start` levanta la API en el puerto 3001.
+`npm test` comprueba el esquema, la reserva y la carrera por la última plaza: de varias peticiones simultáneas solo una queda confirmada y el resto pasa a lista de espera, con el aforo en cero. `npm run migrate` aplica la migración y carga la semilla. `npm start` levanta la API en el puerto 3001.
 
 Reservar una plaza:
 
