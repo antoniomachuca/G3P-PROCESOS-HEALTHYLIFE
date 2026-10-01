@@ -185,6 +185,8 @@ El agente no hace commit ni push salvo que se lo pidan. No hace force-push a `ma
 
 ## 8. Cómo implementar una historia
 
+El papel del agente como ingeniero está en `.agents/SKILLS.md`. Si contradice este archivo, manda este archivo.
+
 - La pantalla cumple los criterios en formato Dado/Cuando/Entonces de la issue, no una versión recortada.
 - Los eventos con `estado` distinto de `abierta`, o con `fin` ya pasado, no salen en el catálogo activo.
 - Las plazas no bajan de cero. Dos reservas concurrentes de la última plaza no pueden dejar el aforo en negativo: la operación de escritura, cuando exista, es transaccional en SQLite.
