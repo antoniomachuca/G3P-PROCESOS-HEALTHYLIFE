@@ -1,0 +1,116 @@
+Issue Type,Summary,Description,Story Points,Priority,Epic Name,Epic Link
+Epic,"EP-01: Catálogo, Búsqueda y Exploración de Actividades","Épica orientada a la consulta, descubrimiento y filtrado geográfico/temporal de eventos deportivos.",,High,"Catálogo y Búsqueda",
+Epic,"EP-02: Publicación y Administración de Eventos","Épica para la gestión del ciclo de vida de los eventos deportivos (creación, edición, cancelación y aforo) por el organizador.",,High,"Gestión de Eventos",
+Epic,"EP-03: Motor Transaccional de Inscripciones y Cupos","Épica para la reserva atómica de plazas, control de sobrecupo y gestión de listas de espera.",,High,"Reservas y Cupos",
+Epic,"EP-04: Calendario Deportivo, Agenda y Recordatorios","Épica para la visualización de la agenda personal del deportista y alertas pre-evento.",,Medium,"Calendario y Agenda",
+Epic,"EP-05: Asistencia, Control en Campo y Calidad del Evento","Épica para la validación presencial (check-in) y evaluación post-evento de la actividad deportiva.",,Medium,"Asistencia y Calidad",
+Story,"HU-01: Catálogo general de actividades deportivas","h3. Narrativa
+*Como* deportista, *quiero* consultar un listado de todas las actividades deportivas próximas y abiertas a inscripción, *para* descubrir en qué sesiones o entrenamientos grupales puedo participar.
+
+h3. Criterios de Aceptación
+* *Dado* que accedo a la sección principal de eventos, *cuando* carga la pantalla, *entonces* se visualizan las tarjetas de los eventos con fecha futura ordenados cronológicamente, mostrando deporte, fecha/hora, lugar y plazas restantes.
+* *Dado* que un evento ya ha concluido, *cuando* el usuario navega por el catálogo activo, *entonces* dicho evento no se muestra en el listado.",2,High,,"Catálogo y Búsqueda"
+Story,"HU-02: Ficha informativa y detalle del evento deportivo","h3. Narrativa
+*Como* deportista, *quiero* consultar la ficha detallada de una actividad (descripción, punto de encuentro, material obligatorio y reglas), *para* saber qué necesito llevar y si se adapta a mis expectativas.
+
+h3. Criterios de Aceptación
+* *Dado* que pulso en un evento del catálogo, *cuando* carga la ficha de detalle, *entonces* veo la descripción del entrenamiento, material requerido, punto exacto de encuentro y plazas disponibles.
+* *Dado* que las plazas de un evento se han agotado, *cuando* veo su ficha, *entonces* el botón de inscripción directa cambia por 'Unirse a lista de espera'.",2,High,,"Catálogo y Búsqueda"
+Story,"HU-03: Filtrado de eventos por modalidad o deporte","h3. Narrativa
+*Como* deportista, *quiero* filtrar las actividades por disciplina deportiva (fútbol, running, pádel, natación, yoga, ciclismo), *para* localizar rápidamente los deportes que practico habitualmente.
+
+h3. Criterios de Aceptación
+* *Dado* que selecciono la etiqueta 'Pádel', *cuando* pulso aplicar filtro, *entonces* el catálogo muestra únicamente partidos y clases de pádel.
+* *Dado* que no hay actividades para la categoría seleccionada, *cuando* aplico el filtro, *entonces* se muestra el mensaje 'No hay eventos disponibles en esta categoría actualmente'.",3,Medium,,"Catálogo y Búsqueda"
+Story,"HU-04: Filtrado por nivel de exigencia o condición física","h3. Narrativa
+*Como* deportista principiante o avanzado, *quiero* filtrar las actividades según el nivel requerido (Iniciación, Intermedio, Competición), *para* evitar apuntarme a sesiones que no se adecúen a mi ritmo físico.
+
+h3. Criterios de Aceptación
+* *Dado* que selecciono el nivel 'Iniciación', *cuando* se actualiza la vista, *entonces* se listan únicamente sesiones catalogadas para principiantes.",2,Medium,,"Catálogo y Búsqueda"
+Story,"HU-05: Búsqueda geográfica de eventos por ubicación y distancia","h3. Narrativa
+*Como* deportista, *quiero* buscar actividades indicando mi municipio o código postal y un radio de distancia en km, *para* encontrar entrenamientos cercanos a mi ubicación.
+
+h3. Criterios de Aceptación
+* *Dado* que introduzco 'Alcorcón' y un radio de '5 km', *cuando* pulso buscar, *entonces* se muestran los eventos que se celebren en instalaciones dentro de ese perímetro.",5,Medium,,"Catálogo y Búsqueda"
+Story,"HU-06: Filtrado por rango de fechas y franjas horarias","h3. Narrativa
+*Como* usuario con disponibilidad limitada, *quiero* filtrar actividades por días específicos de la semana y franjas horarias (mañana/tarde/noche), *para* compaginar el deporte con mis estudios o trabajo.
+
+h3. Criterios de Aceptación
+* *Dado* que elijo 'Sábado y Domingo' y horario 'Mañana (08:00 - 13:00)', *cuando* aplico el filtro, *entonces* solo se muestran las actividades que comiencen dentro de ese marco temporal.",3,Low,,"Catálogo y Búsqueda"
+Story,"HU-07: Publicación y alta de una nueva actividad deportiva","h3. Narrativa
+*Como* organizador o monitor deportivo, *quiero* dar de alta un evento especificando título, fecha, hora, lugar, deporte, aforo máximo y material necesario, *para* convocar a deportistas a mi sesión.
+
+h3. Criterios de Aceptación
+* *Dado* que completo el formulario con campos obligatorios válidos y aforo mayor que 0, *cuando* pulso 'Publicar evento', *entonces* la actividad se guarda con estado 'Abierta' y pasa a ser visible en el catálogo.
+* *Dado* que indico una fecha y hora pasada, *cuando* intento guardar, *entonces* el sistema bloquea el alta mostrando el error 'La fecha del evento debe ser futura'.",3,High,,"Gestión de Eventos"
+Story,"HU-08: Edición y actualización de datos de un evento","h3. Narrativa
+*Como* organizador de un evento, *quiero* editar detalles como el punto de encuentro, la hora o las instrucciones, *para* corregir erratas o ajustar detalles de última hora.
+
+h3. Criterios de Aceptación
+* *Dado* que soy el organizador y modifico la hora de inicio, *cuando* guardo los cambios, *entonces* la ficha del evento se actualiza inmediatamente en el sistema.
+* *Dado* que intento reducir el aforo máximo por debajo de la cantidad de usuarios ya inscritos, *cuando* intento guardar, *entonces* el sistema rechaza la acción.",3,Medium,,"Gestión de Eventos"
+Story,"HU-09: Cancelación motivada de una actividad deportiva","h3. Narrativa
+*Como* organizador deportivo, *quiero* cancelar un evento programado justificando el motivo, *para* informar formalmente a los inscritos y cerrar la convocatoria.
+
+h3. Criterios de Aceptación
+* *Dado* que confirmo la cancelación e introduzco el motivo, *cuando* se procesa la acción, *entonces* el estado del evento cambia a 'Cancelado', se oculta del catálogo activo y se liberan las inscripciones.
+* *Dado* que un evento ya finalizó, *cuando* el organizador accede a sus opciones, *entonces* la opción de cancelación está desactivada.",3,High,,"Gestión de Eventos"
+Story,"HU-10: Configuración de entrenamientos periódicos o recurrentes","h3. Narrativa
+*Como* monitor deportivo, *quiero* programar un evento que se repita con frecuencia semanal, *para* no tener que crear manualmente cada sesión individual.
+
+h3. Criterios de Aceptación
+* *Dado* que marco la casilla 'Evento recurrente' e indico 'Martes por 4 semanas', *cuando* guardo, *entonces* el sistema genera automáticamente 4 sesiones independientes con el mismo aforo y datos base.",5,Low,,"Gestión de Eventos"
+Story,"HU-11: Definición de aforo mínimo y fecha límite de inscripción","h3. Narrativa
+*Como* organizador de deportes de equipo, *quiero* fijar un cupo mínimo de asistentes y una hora límite de inscripción previa, *para* garantizar la viabilidad del partido.
+
+h3. Criterios de Aceptación
+* *Dado* que llega la hora límite de inscripción fijada, *cuando* el reloj del sistema supera ese umbral, *entonces* el evento se cierra y no admite más inscripciones ni cancelaciones directas.",3,Medium,,"Gestión de Eventos"
+Story,"HU-12: Inscripción y reserva individual de plaza","h3. Narrativa
+*Como* deportista, *quiero* inscribirme en una actividad con plazas disponibles con un solo clic, *para* asegurar mi cupo y confirmar mi plaza de forma inmediata.
+
+h3. Criterios de Aceptación
+* *Dado* que el evento tiene plazas libres (plazas_disponibles > 0), *cuando* pulso 'Reservar plaza', *entonces* se crea la inscripción en estado 'Confirmada' y el contador de plazas libres disminuye en 1.
+* *Dado* que dos deportistas intentan reservar la última plaza al mismo tiempo, *cuando* concurren las dos peticiones, *entonces* el backend gestiona la transacción atómica otorgando la plaza a una y redirigiendo a la otra a lista de espera sin sobrecupo.",3,High,,"Reservas y Cupos"
+Story,"HU-13: Cancelación voluntaria de plaza por el participante","h3. Narrativa
+*Como* participante con plaza confirmada, *quiero* anular mi inscripción antes del evento si me surge un imprevisto, *para* dejar mi plaza libre a otro compañero.
+
+h3. Criterios de Aceptación
+* *Dado* que tengo reserva confirmada en un evento futuro, *cuando* pulso 'Cancelar inscripción' y confirmo, *entonces* mi reserva pasa a estado 'Cancelada' y el aforo libre del evento aumenta en 1.
+* *Dado* que el evento ya ha comenzado, *cuando* accedo a la pantalla, *entonces* la opción de cancelar la plaza está inhabilitada.",2,High,,"Reservas y Cupos"
+Story,"HU-14: Entrada automática en lista de espera por aforo completo","h3. Narrativa
+*Como* deportista interesado en una actividad sin plazas libres, *quiero* anotarme en una lista de espera por orden de llegada, *para* tener opción de entrar si alguien se da de baja.
+
+h3. Criterios de Aceptación
+* *Dado* que un evento tiene 0 plazas libres, *cuando* pulso 'Apuntarme a lista de espera', *entonces* mi reserva queda registrada como 'En Espera' y se me muestra mi número de turno en la cola.
+* *Dado* que ya estoy inscrito o ya estoy en la lista de espera del evento, *cuando* visualizo el evento, *entonces* el botón aparece bloqueado evitando duplicados.",3,Medium,,"Reservas y Cupos"
+Story,"HU-15: Promoción automática de vacantes desde lista de espera","h3. Narrativa
+*Como* deportista posicionado en el turno 1 de la lista de espera, *quiero* que el sistema me promueva a plaza confirmada automáticamente cuando un asistente cancele, *para* no perder la oportunidad de asistir.
+
+h3. Criterios de Aceptación
+* *Dado* que hay personas en lista de espera y un usuario titular cancela su plaza, *cuando* se registra la baja, *entonces* el primer usuario de la cola pasa a estado 'Confirmada' automáticamente sin exponer la plaza como libre al público general.",5,Medium,,"Reservas y Cupos"
+Story,"HU-16: Prevención de solapamiento horario en inscripciones","h3. Narrativa
+*Como* deportista, *quiero* que el sistema me avise e impida inscribirme a dos actividades deportivas que coincidan en el mismo día y tramo horario, *para* evitar ausencias y no bloquear plazas a otros compañeros.
+
+h3. Criterios de Aceptación
+* *Dado* que ya tengo una plaza confirmada en un horario, *cuando* intento reservar otra actividad simultánea, *entonces* el sistema rechaza la reserva indicando: 'Ya tienes una actividad reservada en este intervalo'.",3,Low,,"Reservas y Cupos"
+Story,"HU-17: Panel personal de Mis Actividades Deportivas","h3. Narrativa
+*Como* deportista, *quiero* ver en un único panel todas las actividades en las que estoy inscrito (confirmadas, en espera y pasadas), *para* organizar mis entrenamientos de la semana.
+
+h3. Criterios de Aceptación
+* *Dado* que accedo a 'Mis Actividades', *cuando* carga la pantalla, *entonces* veo separadas las secciones 'Próximas actividades' e 'Historial completado', con el estado de cada una.",2,Medium,,"Calendario y Agenda"
+Story,"HU-18: Envío de recordatorio previo al inicio de la actividad","h3. Narrativa
+*Como* participante con plaza confirmada, *quiero* recibir un recordatorio automático 24h antes del evento con la hora y el material a llevar, *para* no olvidarme de la sesión deportiva.
+
+h3. Criterios de Aceptación
+* *Dado* que faltan 24 horas para el inicio de una actividad, *cuando* se ejecuta la tarea programada del sistema, *entonces* se genera una notificación para todos los inscritos confirmados con el punto de encuentro y la hora.",3,Medium,,"Calendario y Agenda"
+Story,"HU-19: Exportación del evento a calendario externo","h3. Narrativa
+*Como* deportista, *quiero* pulsar un botón 'Añadir a mi calendario' para descargar un archivo .ics o añadirlo a Google Calendar, *para* tener el evento deportivo sincronizado en el móvil.
+
+h3. Criterios de Aceptación
+* *Dado* que tengo plaza confirmada, *cuando* pulso 'Exportar a calendario', *entonces* el sistema descarga un archivo .ics con el título, ubicación y horario exactos del evento deportivo.",2,Low,,"Calendario y Agenda"
+Story,"HU-20: Pase de lista y validación de asistencia presencial","h3. Narrativa
+*Como* organizador o monitor deportivo en el terreno de juego, *quiero* registrar qué participantes inscritos han acudido realmente al entrenamiento, *para* llevar el control del absentismo y certificar quién completó la sesión.
+
+h3. Criterios de Aceptación
+* *Dado* que estoy en el día y hora del evento, *cuando* el organizador marca a un participante como 'Asistido', *entonces* la reserva del usuario cambia su estado a 'Completada/Asistida' con marca temporal.
+* *Dado* que un usuario no acudió al entrenamiento, *cuando* el evento finaliza, *entonces* su reserva se marca automáticamente como 'No presentado' (no-show).",5,High,,"Asistencia y Calidad"

@@ -14,6 +14,7 @@
 # Editors & IDEs
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~
@@ -21,4 +22,32 @@
 # Logs and temp files
 *.log
 *.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Secrets
 .env
+.env.*
+!.env.example
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+coverage/
+*.tsbuildinfo
+
+# SQLite (el JSON de semilla sí se versiona)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+data/*.db
+data/*.sqlite
+data/*.sqlite3
