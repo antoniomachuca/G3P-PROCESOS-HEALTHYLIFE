@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "migrate": "node src/db/apply.ts",
-    "test": "node --test src/db/schema.test.ts"
+    "start": "node src/http/server.ts",
+    "test": "node --test src/db/schema.test.ts src/http/reservar.test.ts"
   }
 }
