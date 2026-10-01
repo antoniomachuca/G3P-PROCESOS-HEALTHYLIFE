@@ -1,6 +1,9 @@
+import { randomBytes } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { EventStore } from "../domain/event-store.ts";
+import type { EventStore, ResultadoReserva } from "../domain/event-store.ts";
+import { fechaIsoConOffset } from "../domain/fecha.ts";
 import { assertEvento, assertReserva, type Evento, type Reserva } from "../domain/modelo.ts";
+import { ErrorDeReserva } from "../domain/errores-reserva.ts";
 
 type EventoRow = {
   id: string;
@@ -148,4 +151,69 @@ export class SqliteEventStore implements EventStore {
       .all(eventoId) as unknown as ReservaRow[];
     return rows.map(reservaDesdeFila);
   }
+
+  reservar(eventoId: string, usuarioId: string): ResultadoReserva {
+    const usuario = usuarioId.trim();
+    if (usuario.length === 0) {
+      throw new ErrorDeReserva("usuario_invalido", "El usuario de la reserva es obligatorio");
+    }
+
+    const reserva: Reserva = {
+      id: `ins_${randomBytes(8).toString("hex")}`,
+      eventoId,
+      usuarioId: usuario,
+      estado: "en_espera",
+      creadaEn: fechaIsoConOffset(),
+    };
+
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const evento = this.obtenerEvento(eventoId);
+      if (!evento) {
+        throw new ErrorDeReserva("no_encontrado", "No existe ese evento");
+      }
+      if (!admiteReserva(evento)) {
+        throw new ErrorDeReserva("no_reservable", "Este evento no admite reservas");
+      }
+
+      const yaActiva = this.db
+        .prepare(
+          `SELECT id FROM reservas
+           WHERE evento_id = ? AND usuario_id = ? AND estado IN ('confirmada', 'en_espera')`,
+        )
+        .get(eventoId, usuario);
+      if (yaActiva) {
+        throw new ErrorDeReserva("duplicada", "Ya tienes una reserva en este evento");
+      }
+
+      const actualizacion = this.db
+        .prepare(
+          `UPDATE eventos
+           SET plazas_libres = plazas_libres - 1
+           WHERE id = ? AND plazas_libres > 0 AND estado = 'abierta'`,
+        )
+        .run(eventoId);
+      reserva.estado = Number(actualizacion.changes) === 1 ? "confirmada" : "en_espera";
+      this.guardarReserva(reserva);
+      const plazasDisponibles =
+        reserva.estado === "confirmada" ? evento.plazasDisponibles - 1 : evento.plazasDisponibles;
+      this.db.exec("COMMIT");
+      return { reserva, plazasDisponibles };
+    } catch (error) {
+      try {
+        this.db.exec("ROLLBACK");
+      } catch {
+        // La transacción ya estaba cerrada.
+      }
+      throw error;
+    }
+  }
+}
+
+function admiteReserva(evento: Evento): boolean {
+  if (evento.estado !== "abierta") {
+    return false;
+  }
+  const fin = Date.parse(evento.fin);
+  return Number.isFinite(fin) && fin > Date.now();
 }

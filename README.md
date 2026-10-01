@@ -61,8 +61,16 @@ npm test
 npm run migrate
 ```
 
-`npm test` comprueba el esquema en memoria. `npm run migrate` aplica `001_eventos_y_reservas.sql` y carga la semilla. Bajar las plazas al reservar es la historia siguiente: esta migración solo deja el aforo guardado y acotado (no negativo y nunca por encima de la capacidad).
+`npm test` comprueba el esquema y la reserva. `npm run migrate` aplica la migración y carga la semilla. `npm start` levanta la API en el puerto 3001.
+
+Reservar una plaza:
+
+```bash
+curl -X POST http://127.0.0.1:3001/api/v1/events/evt_001/reservations -H 'X-User-Id: usr_mock_010'
+```
+
+Si queda plaza, la respuesta es `201` con `estado` `confirmada` y `plazasDisponibles` una unidad menor. Si dos peticiones compiten por la última plaza, una queda `confirmada` y la otra `en_espera`, y el aforo no baja de cero. El usuario llega en la cabecera `X-User-Id`. El ejemplo de esa respuesta está en `contracts/eventos.ejemplo.json` (`ejemploReserva`).
 
 ## Estado del código
 
-El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. La API de consulta y la interfaz aún no están. G3P-33 deja el modelo de eventos y reservas en SQLite para la inscripción de HU-12.
+El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. La interfaz aún no está. G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo.

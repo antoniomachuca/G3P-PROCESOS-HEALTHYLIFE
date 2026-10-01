@@ -8,6 +8,7 @@ const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "migrations"
 export function openDatabase(path: string): DatabaseSync {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA foreign_keys = ON");
+  db.exec("PRAGMA busy_timeout = 5000");
   return db;
 }
 
