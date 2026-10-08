@@ -1,0 +1,9 @@
+{
+  "name": "@healthy-life/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/http/server.ts",
+    "test": "node --test src/domain/catalogo.test.ts src/http/catalogo.test.ts"
+  }
+}

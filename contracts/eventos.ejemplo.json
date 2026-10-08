@@ -1,7 +1,7 @@
 {
   "version": "1",
   "modulo": "E3",
-  "descripcion": "Mock de intercambio del Equipo 3. La API de solo lectura de la primera historia sirve un documento con esta forma. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos.",
+  "descripcion": "Mock de intercambio del Equipo 3. La API de solo lectura de la primera historia sirve un documento con esta forma. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. imagenUrl es la ruta o URL de la imagen del evento (puede ser null).",
   "eventos": [
     {
       "id": "evt_001",
@@ -21,11 +21,15 @@
       },
       "aforoMaximo": 8,
       "plazasDisponibles": 3,
-      "material": ["Pala", "Zapatillas de pista"],
+      "material": [
+        "Pala",
+        "Zapatillas de pista"
+      ],
       "estado": "abierta",
       "organizadorId": "usr_mock_001",
       "communityGroupId": null,
-      "routineId": null
+      "routineId": null,
+      "imagenUrl": "/img/eventos/padel.jpg"
     },
     {
       "id": "evt_002",
@@ -45,11 +49,14 @@
       },
       "aforoMaximo": 20,
       "plazasDisponibles": 0,
-      "material": ["Zapatillas de running"],
+      "material": [
+        "Zapatillas de running"
+      ],
       "estado": "abierta",
       "organizadorId": "usr_mock_002",
       "communityGroupId": null,
-      "routineId": null
+      "routineId": null,
+      "imagenUrl": "/img/eventos/running.jpg"
     },
     {
       "id": "evt_000",
@@ -69,11 +76,14 @@
       },
       "aforoMaximo": 15,
       "plazasDisponibles": 0,
-      "material": ["Esterilla"],
+      "material": [
+        "Esterilla"
+      ],
       "estado": "finalizada",
       "organizadorId": "usr_mock_001",
       "communityGroupId": null,
-      "routineId": null
+      "routineId": null,
+      "imagenUrl": "/img/eventos/yoga.jpg"
     }
   ]
 }
