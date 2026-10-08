@@ -63,6 +63,20 @@ npm run migrate
 
 `npm test` comprueba el esquema, la reserva y la carrera por la última plaza: de varias peticiones simultáneas solo una queda confirmada y el resto pasa a lista de espera, con el aforo en cero. `npm run migrate` aplica la migración y carga la semilla. `npm start` levanta la API en el puerto 3001.
 
+## Demo web y reserva
+
+Requisitos: Docker Desktop con Docker Compose. Desde la raíz del repositorio:
+
+```bash
+docker compose up --build
+```
+
+Abre <http://localhost:5173>. El catálogo consulta `GET /api/v1/events` en la API y muestra las plazas actuales. Entra en una actividad o pulsa **Reservar plaza** en su tarjeta. La demo usa el usuario temporal `usr_mock_010`; una reserva disponible se confirma y actualiza el contador. Si otra petición ocupa la última plaza antes, la respuesta puede entrar en lista de espera. Un `409 Conflict` se muestra como conflicto y actualiza el catálogo.
+
+La base SQLite se conserva en `data/e3.sqlite` gracias al volumen local `./data`. Para detener la demo, pulsa `Ctrl+C` en la terminal. Para reiniciarla, vuelve a ejecutar `docker compose up`.
+
+Para ejecutar la aplicación sin Docker, inicia la API desde `apps/api` con `npm start` y, en otra terminal, instala las dependencias desde `apps/web` con `npm install` y ejecuta `npm run dev`. Vite estará disponible en <http://localhost:5173> y reenviará las llamadas `/api` a la API local.
+
 Reservar una plaza:
 
 ```bash
@@ -73,4 +87,4 @@ Si queda plaza, la respuesta es `201` con `estado` `confirmada` y `plazasDisponi
 
 ## Estado del código
 
-El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. La interfaz aún no está. G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo.
+G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. El catálogo y la reserva web consumen esa API; la demo completa se levanta con Docker Compose.
