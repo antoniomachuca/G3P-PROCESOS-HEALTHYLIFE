@@ -1,0 +1,10 @@
+{
+  "name": "@healthy-life/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate": "node src/db/apply.ts",
+    "start": "node src/http/server.ts",
+    "test": "node --test src/db/schema.test.ts src/http/reservar.test.ts src/http/concurrencia.test.ts"
+  }
+}

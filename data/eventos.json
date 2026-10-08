@@ -1,0 +1,79 @@
+{
+  "version": "1",
+  "modulo": "E3",
+  "descripcion": "Mock de intercambio del Equipo 3. La API de solo lectura de la primera historia sirve un documento con esta forma. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos.",
+  "eventos": [
+    {
+      "id": "evt_001",
+      "titulo": "Pádel de iniciación en el campus",
+      "deporte": "padel",
+      "nivel": "iniciacion",
+      "descripcion": "Sesión de iniciación. Se explica el marcador y se juegan partidos cortos.",
+      "inicio": "2026-10-18T10:00:00+02:00",
+      "fin": "2026-10-18T11:30:00+02:00",
+      "lugar": {
+        "nombre": "Pistas de pádel",
+        "puntoEncuentro": "Entrada del pabellón, campus de Alcorcón",
+        "municipio": "Alcorcón",
+        "direccion": "Campus de Alcorcón, Universidad Rey Juan Carlos",
+        "lat": 40.3406,
+        "lng": -3.8264
+      },
+      "aforoMaximo": 8,
+      "plazasDisponibles": 3,
+      "material": ["Pala", "Zapatillas de pista"],
+      "estado": "abierta",
+      "organizadorId": "usr_mock_001",
+      "communityGroupId": null,
+      "routineId": null
+    },
+    {
+      "id": "evt_002",
+      "titulo": "Running por el campus",
+      "deporte": "running",
+      "nivel": "intermedio",
+      "descripcion": "Salida grupal de 6 km a ritmo constante.",
+      "inicio": "2026-10-19T09:00:00+02:00",
+      "fin": "2026-10-19T10:00:00+02:00",
+      "lugar": {
+        "nombre": "Campus de Móstoles",
+        "puntoEncuentro": "Puerta principal del campus",
+        "municipio": "Móstoles",
+        "direccion": "Campus de Móstoles, Universidad Rey Juan Carlos",
+        "lat": 40.3347,
+        "lng": -3.8754
+      },
+      "aforoMaximo": 20,
+      "plazasDisponibles": 0,
+      "material": ["Zapatillas de running"],
+      "estado": "abierta",
+      "organizadorId": "usr_mock_002",
+      "communityGroupId": null,
+      "routineId": null
+    },
+    {
+      "id": "evt_000",
+      "titulo": "Yoga de septiembre",
+      "deporte": "yoga",
+      "nivel": "iniciacion",
+      "descripcion": "Sesión ya celebrada. No debe aparecer en el catálogo activo.",
+      "inicio": "2026-09-12T18:00:00+02:00",
+      "fin": "2026-09-12T19:00:00+02:00",
+      "lugar": {
+        "nombre": "Sala polivalente",
+        "puntoEncuentro": "Hall del aulario, campus de Fuenlabrada",
+        "municipio": "Fuenlabrada",
+        "direccion": "Campus de Fuenlabrada, Universidad Rey Juan Carlos",
+        "lat": 40.2823,
+        "lng": -3.8214
+      },
+      "aforoMaximo": 15,
+      "plazasDisponibles": 0,
+      "material": ["Esterilla"],
+      "estado": "finalizada",
+      "organizadorId": "usr_mock_001",
+      "communityGroupId": null,
+      "routineId": null
+    }
+  ]
+}
