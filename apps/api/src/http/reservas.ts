@@ -12,6 +12,16 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     return;
   }
 
+  const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
+  if (req.method === "GET" && ruta === "/api/v1/events") {
+    const ahora = Date.now();
+    const eventos = store.listarEventos().filter(
+      (evento) => evento.estado === "abierta" && Date.parse(evento.fin) > ahora,
+    );
+    responder(res, 200, { eventos });
+    return;
+  }
+
   const eventoId = idDeEvento(req);
   if (!eventoId || req.method !== "POST") {
     responder(res, req.method === "POST" ? 404 : 405, { mensaje: "Ruta no encontrada" });
@@ -64,7 +74,7 @@ function aplicarCors(req: IncomingMessage, res: ServerResponse): void {
   res.setHeader("Access-Control-Allow-Origin", origen);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-User-Id");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 }
 
 function responder(res: ServerResponse, status: number, cuerpo: unknown): void {

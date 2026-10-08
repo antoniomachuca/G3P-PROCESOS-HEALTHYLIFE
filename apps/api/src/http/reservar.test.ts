@@ -114,6 +114,32 @@ test("POST /api/v1/events/{id}/reservations devuelve la plaza confirmada", async
   servidor.close();
 });
 
+test("GET /api/v1/events lista eventos abiertos y no finalizados", async () => {
+  const store = almacen();
+  store.guardarEvento(eventoDePrueba({ id: "evt_activo" }));
+  store.guardarEvento(eventoDePrueba({ id: "evt_cerrado", estado: "cancelada" }));
+  store.guardarEvento(eventoDePrueba({
+    id: "evt_pasado",
+    inicio: "2026-09-12T18:00:00+02:00",
+    fin: "2026-09-12T19:00:00+02:00",
+  }));
+  const servidor = createServer((req, res) => {
+    manejarReservas(store, req, res);
+  });
+  await escuchar(servidor);
+  const puerto = (servidor.address() as AddressInfo).port;
+
+  const respuesta = await fetch(`http://127.0.0.1:${puerto}/api/v1/events`, {
+    headers: { Origin: "http://localhost:5173" },
+  });
+  const cuerpo = (await respuesta.json()) as { eventos: Evento[] };
+
+  assert.equal(respuesta.status, 200);
+  assert.equal(respuesta.headers.get("access-control-allow-origin"), "http://localhost:5173");
+  assert.deepEqual(cuerpo.eventos.map((evento) => evento.id), ["evt_activo"]);
+  servidor.close();
+});
+
 test("dos peticiones concurrentes sobre la última plaza no dejan el aforo en negativo", async () => {
   const directorio = mkdtempSync(join(tmpdir(), "g3p-34-"));
   const databasePath = join(directorio, "carrera.sqlite");
