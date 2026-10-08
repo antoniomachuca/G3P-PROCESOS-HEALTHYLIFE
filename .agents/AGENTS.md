@@ -162,7 +162,32 @@ fix/G3P-123-plazas-negativas
 
 Una issue, una rama, un pull request. El título del PR y los commits empiezan por la clave: `G3P-123: …`.
 
-En GitHub, el prefijo `G3P-` ya autolinka a `https://ivohagmartinez-1789992099071.atlassian.net/browse/G3P-<num>`.
+### Formato obligatorio de commits (autolink con Jira)
+
+Todo commit en el repositorio **debe** comenzar obligatoriamente por la clave de la tarea o historia en Jira (`G3P-<número>:`):
+
+```text
+G3P-123: Resumen imperativo y claro de la funcionalidad o corrección
+
+[Opcional] Línea en blanco seguida de la explicación del porqué,
+decisiones tomadas o detalles técnicos relevantes.
+```
+
+**Por qué es obligatorio:**
+- **Autolink en GitHub**: GitHub tiene configurado el autolink reference oficial. Cualquier texto con el formato `G3P-<número>` (en commits, PRs o issues) se convierte automáticamente en un hipervínculo clicable directo a `https://ivohagmartinez-1789992099071.atlassian.net/browse/G3P-<número>`.
+- **Trazabilidad en Jira**: Permite que Jira vincule el commit directamente en el panel *Development* de la issue correspondiente, manteniendo al equipo alineado.
+
+**Ejemplos correctos:**
+- `G3P-36: Añadir UI de reserva y contador de plazas`
+- `G3P-37: Integrar catálogo con eventos de SQLite`
+- `G3P-38: Preparar demo de reservas con Docker`
+- `G3P-39: Configurar pipeline de CI con GitHub Actions`
+
+**Ejemplos incorrectos (prohibidos):**
+- ❌ `feat: añadir botón` (falta la clave `G3P-XX:`)
+- ❌ `G3P36: arreglado` (falta el guion en la clave)
+- ❌ `cambios varios` o `fix bug` (sin clave ni trazabilidad)
+
 
 Crear la rama desde el panel Development de la issue deja el desarrollo enlazado en Jira. Eso solo aparece cuando el sitio tiene instalada la app **GitHub for Jira** y este repositorio está concedido. El alta de esa app la hace un administrador del sitio Jira (el dueño del site es la cuenta de Ivo); un agente no puede completar el OAuth de Atlassian en nombre del equipo. Pasos:
 
