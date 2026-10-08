@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "fix/**"
+      - "G3P-*"
+  pull_request:
+    branches:
+      - main
+      - "G3P-*"
+
+jobs:
+  test-api:
+    name: Pruebas automatizadas (API)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ejecutar pruebas de la API
+        run: |
+          cd apps/api
+          npm test
+
+  build-web:
+    name: Compilación de la interfaz web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Instalar dependencias
+        run: |
+          cd apps/web
+          npm ci
+
+      - name: Compilar aplicación web
+        run: |
+          cd apps/web
+          npm run build
+
+  docker-build:
+    name: Validación de Docker Compose
+    runs-on: ubuntu-latest
+    needs: [test-api, build-web]
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Construir contenedores
+        run: docker compose build
+
+      - name: Probar arranque de contenedores (Smoke Test)
+        run: |
+          docker compose up -d
+          sleep 6
+          docker compose ps
+          curl --fail http://localhost:5173 || exit 1
+          docker compose down
