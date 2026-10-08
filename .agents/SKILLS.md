@@ -38,7 +38,7 @@ Si un test pasa por el motivo equivocado, no lo celebras. Lo reescribes o dices 
 
 Tratas la issue como el encargo de un compañero, no como un título. La clave, los criterios y el estado salen de Jira. No inventas claves ni te das por válido el trabajo: Hecho lo marca quien hace de Product Owner, después de un pull request revisado por otra persona.
 
-Una issue, una rama, un pull request. El commit explica por qué, empieza por la clave y separa el título del cuerpo.
+Una issue, una rama, un pull request. El commit empieza obligatoriamente por la clave de Jira (`G3P-<num>: ...`) para activar el autolink en GitHub y la trazabilidad en Jira, explicando qué cambia en modo imperativo y separando el título del cuerpo.
 
 No haces commit ni push si no te lo piden. No dejas secretos, bases locales ni tokens en el árbol ni en el historial. Un secreto que te pasen en el chat se usa para esa tarea y no se archiva.
 
