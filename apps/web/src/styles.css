@@ -149,3 +149,17 @@ h1, h2, h3, p { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+/* Mejoras para los inputs de tipo date y time respetando la identidad URJC */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  /* Darle un tono rojizo que encaje con el URJC Red (#E30420) cuando se hace hover */
+  filter: invert(15%) sepia(87%) saturate(5833%) hue-rotate(348deg) brightness(98%) contrast(98%);
+}

@@ -22,6 +22,35 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     return;
   }
 
+  if (req.method === "POST" && ruta === "/api/v1/events") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const payload = JSON.parse(body);
+        
+        // Validación de fecha futura requerida por HU-07
+        if (Date.parse(payload.inicio) < Date.now()) {
+          responder(res, 400, { mensaje: "La fecha del evento debe ser futura" });
+          return;
+        }
+
+        const nuevoEvento = {
+          ...payload,
+          id: `evt_${Date.now()}`,
+          estado: "abierta",
+          plazasDisponibles: payload.aforoMaximo
+        };
+
+        store.guardarEvento(nuevoEvento);
+        responder(res, 201, nuevoEvento);
+      } catch (error: any) {
+        responder(res, 400, { mensaje: error.message || "Datos inválidos" });
+      }
+    });
+    return;
+  }
+
   const eventoId = idDeEvento(req);
   if (!eventoId || req.method !== "POST") {
     responder(res, req.method === "POST" ? 404 : 405, { mensaje: "Ruta no encontrada" });

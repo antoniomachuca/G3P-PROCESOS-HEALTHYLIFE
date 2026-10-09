@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ApiError, cargarEventos, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
+import { FormularioEvento } from "./FormularioEvento";
 
 const USUARIO_DEMO = import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010";
 const NOMBRE_DEPORTE: Record<Deporte, string> = {
@@ -38,6 +39,7 @@ function App() {
   const [consulta, setConsulta] = useState("");
   const [deporteActivo, setDeporteActivo] = useState<Deporte | "todos">("todos");
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
+  const [creandoEvento, setCreandoEvento] = useState(false);
   const [reservandoId, setReservandoId] = useState("");
   const [reservas, setReservas] = useState<Record<string, EstadoReserva>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -119,15 +121,26 @@ function App() {
           <span className="marca__nombre">Healthy Life</span>
         </a>
         <nav className="navegacion" aria-label="Navegación principal">
-          <a className={!eventoSeleccionado ? "navegacion__activo" : ""} href="#catalogo" onClick={() => setEventoSeleccionado(null)}>
+          <a className={!eventoSeleccionado && !creandoEvento ? "navegacion__activo" : ""} href="#catalogo" onClick={() => { setEventoSeleccionado(null); setCreandoEvento(false); }}>
             Actividades
           </a>
-          <span>Reservas deportivas</span>
+          <button className="boton boton--primario" style={{ minHeight: '34px', padding: '6px 12px', fontSize: '13px' }} onClick={() => { setEventoSeleccionado(null); setCreandoEvento(true); }}>
+            Publicar actividad
+          </button>
         </nav>
         <span className="entorno-demo">Entorno de demostración</span>
       </header>
 
-      {eventoSeleccionado ? (
+      {creandoEvento ? (
+        <FormularioEvento 
+          onCreado={(nuevoEvento) => {
+            setEventos(prev => [...prev, nuevoEvento].sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime()));
+            setCreandoEvento(false);
+            setAviso({ tipo: "exito", texto: "¡Actividad publicada correctamente!" });
+          }} 
+          onCancelar={() => setCreandoEvento(false)} 
+        />
+      ) : eventoSeleccionado ? (
         <main className="contenido contenido--ficha">
           <button className="enlace-volver" type="button" onClick={() => setEventoSeleccionado(null)}>
             Volver al catálogo
