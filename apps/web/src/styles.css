@@ -1,12 +1,12 @@
 /* Tokens del diseño de Stitch para el listado. Cambiar aquí si el equipo
    decide pasar a los de la guía URJC (--rojo: #E30420). */
 :root {
-  --rojo: #c8102e;
-  --rojo-oscuro: #9e001f;
-  --carbon: #0f172a;
+  --rojo: #E30420;
+  --rojo-oscuro: #B30318;
+  --carbon: #000000;
   --texto: #334155;
   --apagado: #64748b;
-  --fondo: #f8fafc;
+  --fondo: #FFFFFF;
   --superficie: #ffffff;
   --superficie-hundida: #f1f5f9;
   --borde: #e2e8f0;
@@ -14,8 +14,8 @@
   --exito: #047857;
   --aviso-fondo: #fffbeb;
   --aviso: #b45309;
-  --fuente: 'Work Sans', sans-serif;
-  --fuente-titulo: 'Chivo', sans-serif;
+  --fuente: Gill Sans, "Gill Sans MT", Calibri, Arial, sans-serif;
+  --fuente-titulo: Gill Sans, "Gill Sans MT", Calibri, Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }

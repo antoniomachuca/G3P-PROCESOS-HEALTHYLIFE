@@ -51,3 +51,8 @@ Hasta que eso esté hecho, las ramas se crean en local con la clave de la issue 
 ## Estado del código
 
 El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. Aún no hay aplicación en el repositorio: el primer incremento se implementa a partir de las historias que el equipo meta en el sprint (las de consulta, HU-01 y HU-02, no dependen de los demás módulos).
+
+## Historia HU-01 (G3P-8) Completada
+
+HU-01 (G3P-8): GET /api/v1/events devuelve { "eventos": [...] } solo con eventos abierta cuyo fin no ha pasado, ordenados por inicio. Lee data/eventos.json. El contrato añade imagenUrl (ruta o URL de la imagen, puede ser null). Arranque: cd apps/api && npm start y cd apps/web && npm install && npm run dev.
+
