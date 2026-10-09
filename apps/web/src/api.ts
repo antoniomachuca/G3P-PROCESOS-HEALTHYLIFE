@@ -36,3 +36,22 @@ export async function reservarPlaza(eventoId: string, usuarioId: string): Promis
 
   return cuerpo as ResultadoReserva;
 }
+
+export async function crearEvento(datosEvento: Omit<Evento, "id" | "estado" | "plazasDisponibles">): Promise<Evento> {
+  const respuesta = await fetch("/api/v1/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datosEvento),
+  });
+  
+  const cuerpo = (await respuesta.json()) as Evento | { mensaje?: string };
+  
+  if (!respuesta.ok) {
+    throw new ApiError(
+      respuesta.status,
+      "mensaje" in cuerpo && cuerpo.mensaje ? cuerpo.mensaje : "No se ha podido publicar el evento."
+    );
+  }
+  
+  return cuerpo as Evento;
+}

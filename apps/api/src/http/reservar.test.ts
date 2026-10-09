@@ -182,3 +182,57 @@ function reservarEnOtroHilo(
     worker.once("error", reject);
   });
 }
+
+test("POST /api/v1/events crea un nuevo evento", async () => {
+  const store = almacen();
+  const servidor = createServer((req, res) => {
+    manejarReservas(store, req, res);
+  });
+  await escuchar(servidor);
+  const puerto = (servidor.address() as AddressInfo).port;
+
+  const respuestaBuena = await fetch(`http://127.0.0.1:${puerto}/api/v1/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      titulo: "Futbol de prueba",
+      deporte: "futbol",
+      nivel: "intermedio",
+      descripcion: "Partido",
+      inicio: "2099-01-01T10:00:00Z",
+      fin: "2099-01-01T11:00:00Z",
+      lugar: { nombre: "A", puntoEncuentro: "B", municipio: "C", direccion: "D", lat: 0, lng: 0 },
+      aforoMaximo: 20,
+      material: [],
+      organizadorId: "usr_mock_010",
+      communityGroupId: null,
+      routineId: null
+    })
+  });
+  const cuerpoBueno = await respuestaBuena.json() as Evento;
+  assert.equal(respuestaBuena.status, 201);
+  assert.equal(cuerpoBueno.plazasDisponibles, 20);
+  assert.equal(store.obtenerEvento(cuerpoBueno.id)?.plazasDisponibles, 20);
+
+  const respuestaMala = await fetch(`http://127.0.0.1:${puerto}/api/v1/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      titulo: "Futbol Pasado",
+      deporte: "futbol",
+      nivel: "intermedio",
+      descripcion: "Partido",
+      inicio: "2020-01-01T10:00:00Z",
+      fin: "2020-01-01T11:00:00Z",
+      lugar: { nombre: "A", puntoEncuentro: "B", municipio: "C", direccion: "D", lat: 0, lng: 0 },
+      aforoMaximo: 20,
+      material: [],
+      organizadorId: "usr_mock_010",
+      communityGroupId: null,
+      routineId: null
+    })
+  });
+  assert.equal(respuestaMala.status, 400);
+
+  servidor.close();
+});
