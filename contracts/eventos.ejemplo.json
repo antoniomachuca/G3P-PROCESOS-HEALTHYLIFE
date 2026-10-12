@@ -94,5 +94,39 @@
     "estado": "confirmada",
     "creadaEn": "2026-10-01T12:00:00+02:00",
     "plazasDisponibles": 2
+  },
+  "ejemploEventosUsuario": {
+    "userId": "usuario-demo-001",
+    "user_id": "usuario-demo-001",
+    "events": [
+      {
+        "eventId": "evt_001",
+        "event_id": "evt_001",
+        "id": "evt_001",
+        "name": "Pádel de iniciación en el campus",
+        "titulo": "Pádel de iniciación en el campus",
+        "type": "padel",
+        "deporte": "padel",
+        "location": "Pistas de pádel (Alcorcón)",
+        "lugar": "Pistas de pádel (Alcorcón)",
+        "availablePlaces": 3,
+        "available_places": 3,
+        "plazasDisponibles": 3,
+        "aforoMaximo": 8,
+        "activityDates": [
+          "2026-10-18"
+        ],
+        "activity_dates": [
+          "2026-10-18"
+        ],
+        "inicio": "2026-10-18T10:00:00+02:00",
+        "fin": "2026-10-18T11:30:00+02:00",
+        "estimatedCalories": 525,
+        "estimated_calories": 525,
+        "enrolled": true,
+        "inscrito": true
+      }
+    ]
   }
 }
+

@@ -152,6 +152,38 @@ export class SqliteEventStore implements EventStore {
     return rows.map(reservaDesdeFila);
   }
 
+  listarReservasPorUsuario(usuarioId: string): Reserva[] {
+    const usuario = usuarioId.trim();
+    if (!usuario) return [];
+    const rows = this.db
+      .prepare(
+        `SELECT id, evento_id, usuario_id, estado, creada_en
+         FROM reservas
+         WHERE usuario_id = ?
+         ORDER BY creada_en DESC, id`,
+      )
+      .all(usuario) as unknown as ReservaRow[];
+    return rows.map(reservaDesdeFila);
+  }
+
+  listarEventosPorUsuario(usuarioId: string): Evento[] {
+    const usuario = usuarioId.trim();
+    if (!usuario) return [];
+    const rows = this.db
+      .prepare(
+        `SELECT ${EVENTO_COLUMNS}
+         FROM eventos
+         WHERE id IN (
+           SELECT evento_id FROM reservas
+           WHERE usuario_id = ? AND estado = 'confirmada'
+         )
+         ORDER BY inicio`,
+      )
+      .all(usuario) as unknown as EventoRow[];
+    return rows.map(eventoDesdeFila);
+  }
+
+
   reservar(eventoId: string, usuarioId: string): ResultadoReserva {
     const usuario = usuarioId.trim();
     if (usuario.length === 0) {
