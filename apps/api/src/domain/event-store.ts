@@ -12,4 +12,7 @@ export interface EventStore {
   guardarReserva(reserva: Reserva): void;
   listarReservas(eventoId: string): Reserva[];
   reservar(eventoId: string, usuarioId: string): ResultadoReserva;
+  listarEventosPorUsuario(usuarioId: string): Evento[];
+  listarReservasPorUsuario(usuarioId: string): Reserva[];
 }
+
