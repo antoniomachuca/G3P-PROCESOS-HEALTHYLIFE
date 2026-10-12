@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { EventStore } from "../domain/event-store.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
+import { eventosActivos } from "../domain/catalogo.ts";
 
 const ORIGEN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
@@ -14,13 +15,11 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
 
   const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
   if (req.method === "GET" && ruta === "/api/v1/events") {
-    const ahora = Date.now();
-    const eventos = store.listarEventos().filter(
-      (evento) => evento.estado === "abierta" && Date.parse(evento.fin) > ahora,
-    );
+    const eventos = eventosActivos(store.listarEventos());
     responder(res, 200, { eventos });
     return;
   }
+
 
   if (req.method === "POST" && ruta === "/api/v1/events") {
     let body = "";

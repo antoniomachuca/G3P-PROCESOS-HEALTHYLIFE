@@ -85,6 +85,6 @@ curl -X POST http://127.0.0.1:3001/api/v1/events/evt_001/reservations -H 'X-User
 
 Si queda plaza, la respuesta es `201` con `estado` `confirmada` y `plazasDisponibles` una unidad menor. Si dos peticiones compiten por la última plaza, una queda `confirmada` y la otra `en_espera`, y el aforo no baja de cero. El usuario llega en la cabecera `X-User-Id`. El ejemplo de esa respuesta está en `contracts/eventos.ejemplo.json` (`ejemploReserva`).
 
-## Estado del código
+HU-01 (G3P-8): `GET /api/v1/events` devuelve `{ "eventos": [...] }` solo con eventos `abierta` cuyo `fin` no ha pasado, ordenados por `inicio`. Lee `data/eventos.json` / SQLite. El contrato añade `imagenUrl` (ruta o URL de la imagen, puede ser null).
+G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
 
-G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. El catálogo y la reserva web consumen esa API; la demo completa se levanta con Docker Compose.

@@ -1,7 +1,8 @@
 {
   "version": "1",
   "modulo": "E3",
-  "descripcion": "Mock de intercambio del Equipo 3. El listado de eventos usa la clave eventos. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. ejemploReserva es la respuesta de POST /api/v1/events/{id}/reservations y no forma parte del listado.",
+  "descripcion": "Mock de intercambio del Equipo 3. El listado de eventos usa la clave eventos. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. imagenUrl es la ruta o URL de la imagen del evento (puede ser null). ejemploReserva es la respuesta de POST /api/v1/events/{id}/reservations y no forma parte del listado.",
+
   "eventos": [
     {
       "id": "evt_001",
@@ -21,11 +22,15 @@
       },
       "aforoMaximo": 8,
       "plazasDisponibles": 3,
-      "material": ["Pala", "Zapatillas de pista"],
+      "material": [
+        "Pala",
+        "Zapatillas de pista"
+      ],
       "estado": "abierta",
       "organizadorId": "usr_mock_001",
       "communityGroupId": null,
-      "routineId": null
+      "routineId": null,
+      "imagenUrl": "/img/eventos/padel.jpg"
     },
     {
       "id": "evt_002",
@@ -45,11 +50,14 @@
       },
       "aforoMaximo": 20,
       "plazasDisponibles": 0,
-      "material": ["Zapatillas de running"],
+      "material": [
+        "Zapatillas de running"
+      ],
       "estado": "abierta",
       "organizadorId": "usr_mock_002",
       "communityGroupId": null,
-      "routineId": null
+      "routineId": null,
+      "imagenUrl": "/img/eventos/running.jpg"
     },
     {
       "id": "evt_000",
@@ -69,11 +77,14 @@
       },
       "aforoMaximo": 15,
       "plazasDisponibles": 0,
-      "material": ["Esterilla"],
+      "material": [
+        "Esterilla"
+      ],
       "estado": "finalizada",
       "organizadorId": "usr_mock_001",
       "communityGroupId": null,
-      "routineId": null
+      "routineId": null,
+      "imagenUrl": "/img/eventos/yoga.jpg"
     }
   ],
   "ejemploReserva": {

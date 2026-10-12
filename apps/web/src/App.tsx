@@ -3,6 +3,7 @@ import { ApiError, cargarEventos, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
 
+
 const USUARIO_DEMO = import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010";
 const NOMBRE_DEPORTE: Record<Deporte, string> = {
   futbol: "Fútbol",
@@ -147,9 +148,10 @@ function App() {
           </button>
           <div className="ficha-cabecera">
             <div className="ficha-foto-wrap">
-              <img className="ficha-foto" src={IMAGEN_DEMO[eventoSeleccionado.deporte] ?? `/img/eventos/${eventoSeleccionado.deporte}.jpg`} alt={`Actividad de ${NOMBRE_DEPORTE[eventoSeleccionado.deporte]}`} />
+              <img className="ficha-foto" src={eventoSeleccionado.imagenUrl ?? IMAGEN_DEMO[eventoSeleccionado.deporte] ?? `/img/eventos/${eventoSeleccionado.deporte}.jpg`} alt={`Actividad de ${NOMBRE_DEPORTE[eventoSeleccionado.deporte]}`} />
               <span className="etiqueta-foto">{NOMBRE_DEPORTE[eventoSeleccionado.deporte]}</span>
             </div>
+
             <div className="ficha-titulo">
               <p className="ceja">Ficha de actividad</p>
               <h1>{eventoSeleccionado.titulo}</h1>
@@ -324,9 +326,10 @@ function TarjetaEvento({
   return (
     <article className="tarjeta-evento">
       <button className="tarjeta-evento__foto" type="button" onClick={onAbrir} aria-label={`Ver ficha de ${evento.titulo}`}>
-        <img src={IMAGEN_DEMO[evento.deporte] ?? `/img/eventos/${evento.deporte}.jpg`} alt={`Actividad de ${NOMBRE_DEPORTE[evento.deporte]}`} loading="lazy" />
+        <img src={evento.imagenUrl ?? IMAGEN_DEMO[evento.deporte] ?? `/img/eventos/${evento.deporte}.jpg`} alt={`Actividad de ${NOMBRE_DEPORTE[evento.deporte]}`} loading="lazy" />
         <span className="etiqueta-foto">{NOMBRE_DEPORTE[evento.deporte]}</span>
       </button>
+
       <div className="tarjeta-evento__contenido">
         <div className="tarjeta-evento__lugar">{evento.lugar.municipio} <span>·</span> {evento.nivel}</div>
         <h3>{evento.titulo}</h3>
@@ -350,3 +353,4 @@ function TarjetaEvento({
 }
 
 export default App;
+

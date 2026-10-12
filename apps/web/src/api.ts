@@ -55,3 +55,4 @@ export async function crearEvento(datosEvento: Omit<Evento, "id" | "estado" | "p
   
   return cuerpo as Evento;
 }
+

@@ -5,6 +5,7 @@
   "scripts": {
     "migrate": "node src/db/apply.ts",
     "start": "node src/http/server.ts",
-    "test": "node --test src/db/schema.test.ts src/http/reservar.test.ts src/http/concurrencia.test.ts"
+    "test": "node --test src/domain/catalogo.test.ts src/http/catalogo.test.ts src/db/schema.test.ts src/http/reservar.test.ts src/http/concurrencia.test.ts"
   }
 }
+

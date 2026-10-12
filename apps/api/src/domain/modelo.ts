@@ -17,7 +17,7 @@ export type Lugar = {
   lng: number;
 };
 
-/** Forma pública del contrato. En SQLite, aforoMaximo es capacidad y plazasDisponibles es plazas_libres. */
+/** Forma pública del contrato (contracts/eventos.ejemplo.json). En SQLite, aforoMaximo es capacidad y plazasDisponibles es plazas_libres. */
 export type Evento = {
   id: string;
   titulo: string;
@@ -34,6 +34,8 @@ export type Evento = {
   organizadorId: string;
   communityGroupId: string | null;
   routineId: string | null;
+  /** Ruta o URL de la imagen del evento. Si falta, la interfaz muestra un hueco gris. */
+  imagenUrl?: string | null;
 };
 
 export type Reserva = {
@@ -96,3 +98,4 @@ export function assertReserva(reserva: Reserva): void {
     throw new Error("Estado de reserva no reconocido");
   }
 }
+

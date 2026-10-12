@@ -31,6 +31,7 @@ if (esPrincipal) {
     manejarReservas(store, req, res);
   });
   servidor.listen(PUERTO, () => {
-    console.log(`API de reservas en http://127.0.0.1:${PUERTO}/api/v1/events/{id}/reservations`);
+    console.log(`API de eventos y reservas en http://127.0.0.1:${PUERTO}/api/v1/events`);
   });
 }
+
