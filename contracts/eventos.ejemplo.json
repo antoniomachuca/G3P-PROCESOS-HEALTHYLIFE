@@ -1,7 +1,8 @@
 {
   "version": "1",
   "modulo": "E3",
-  "descripcion": "Mock de intercambio del Equipo 3. La API de solo lectura de la primera historia sirve un documento con esta forma. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. imagenUrl es la ruta o URL de la imagen del evento (puede ser null).",
+  "descripcion": "Mock de intercambio del Equipo 3. El listado de eventos usa la clave eventos. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. imagenUrl es la ruta o URL de la imagen del evento (puede ser null). ejemploReserva es la respuesta de POST /api/v1/events/{id}/reservations y no forma parte del listado.",
+
   "eventos": [
     {
       "id": "evt_001",
@@ -85,5 +86,13 @@
       "routineId": null,
       "imagenUrl": "/img/eventos/yoga.jpg"
     }
-  ]
+  ],
+  "ejemploReserva": {
+    "id": "ins_001",
+    "eventoId": "evt_001",
+    "usuarioId": "usr_mock_010",
+    "estado": "confirmada",
+    "creadaEn": "2026-10-01T12:00:00+02:00",
+    "plazasDisponibles": 2
+  }
 }

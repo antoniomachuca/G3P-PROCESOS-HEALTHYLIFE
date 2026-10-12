@@ -5,6 +5,9 @@ services:
       dockerfile: apps/api/Dockerfile
     ports:
       - "3001:3001"
+    volumes:
+      - ./data:/app/data
+
   web:
     build:
       context: .
@@ -13,3 +16,4 @@ services:
       - "5173:80"
     depends_on:
       - api
+

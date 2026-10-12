@@ -48,11 +48,43 @@ Hasta que eso esté hecho, las ramas se crean en local con la clave de la issue 
 
 `contracts/eventos.ejemplo.json` es el mock de intercambio. Los identificadores de usuario (`userId`), grupo (`communityGroupId`) y rutina (`routineId`) son strings opacos de E1, E4 y E5. Este módulo no implementa sus pantallas.
 
-## Estado del código
+## Datos
 
-El Sprint 1 pide 1 o 2 historias de extremo a extremo, desplegables con Docker. Aún no hay aplicación en el repositorio: el primer incremento se implementa a partir de las historias que el equipo meta en el sprint (las de consulta, HU-01 y HU-02, no dependen de los demás módulos).
+`data/eventos.json` es la semilla, con la misma forma que `contracts/eventos.ejemplo.json`. El contrato público sigue llamando al aforo `aforoMaximo` y `plazasDisponibles`.
 
-## Historia HU-01 (G3P-8) Completada
+La migración de G3P-33 crea la base SQLite `data/e3.sqlite` (no se versiona). En las tablas los campos de aforo se llaman `capacidad` y `plazas_libres`. El estado del evento es `abierta`, `cancelada` o `finalizada`. El estado de la reserva es `confirmada`, `en_espera`, `cancelada`, `asistida` o `no_presentado`.
 
-HU-01 (G3P-8): GET /api/v1/events devuelve { "eventos": [...] } solo con eventos abierta cuyo fin no ha pasado, ordenados por inicio. Lee data/eventos.json. El contrato añade imagenUrl (ruta o URL de la imagen, puede ser null). Arranque: cd apps/api && npm start y cd apps/web && npm install && npm run dev.
+Desde `apps/api`, con Node 22.18 o superior (TypeScript se ejecuta directamente, sin dependencias):
+
+```bash
+npm test
+npm run migrate
+```
+
+`npm test` comprueba el esquema, la reserva y la carrera por la última plaza: de varias peticiones simultáneas solo una queda confirmada y el resto pasa a lista de espera, con el aforo en cero. `npm run migrate` aplica la migración y carga la semilla. `npm start` levanta la API en el puerto 3001.
+
+## Demo web y reserva
+
+Requisitos: Docker Desktop con Docker Compose. Desde la raíz del repositorio:
+
+```bash
+docker compose up --build
+```
+
+Abre <http://localhost:5173>. El catálogo consulta `GET /api/v1/events` en la API y muestra las plazas actuales. Entra en una actividad o pulsa **Reservar plaza** en su tarjeta. La demo usa el usuario temporal `usr_mock_010`; una reserva disponible se confirma y actualiza el contador. Si otra petición ocupa la última plaza antes, la respuesta puede entrar en lista de espera. Un `409 Conflict` se muestra como conflicto y actualiza el catálogo.
+
+La base SQLite se conserva en `data/e3.sqlite` gracias al volumen local `./data`. Para detener la demo, pulsa `Ctrl+C` en la terminal. Para reiniciarla, vuelve a ejecutar `docker compose up`.
+
+Para ejecutar la aplicación sin Docker, inicia la API desde `apps/api` con `npm start` y, en otra terminal, instala las dependencias desde `apps/web` con `npm install` y ejecuta `npm run dev`. Vite estará disponible en <http://localhost:5173> y reenviará las llamadas `/api` a la API local.
+
+Reservar una plaza:
+
+```bash
+curl -X POST http://127.0.0.1:3001/api/v1/events/evt_001/reservations -H 'X-User-Id: usr_mock_010'
+```
+
+Si queda plaza, la respuesta es `201` con `estado` `confirmada` y `plazasDisponibles` una unidad menor. Si dos peticiones compiten por la última plaza, una queda `confirmada` y la otra `en_espera`, y el aforo no baja de cero. El usuario llega en la cabecera `X-User-Id`. El ejemplo de esa respuesta está en `contracts/eventos.ejemplo.json` (`ejemploReserva`).
+
+HU-01 (G3P-8): `GET /api/v1/events` devuelve `{ "eventos": [...] }` solo con eventos `abierta` cuyo `fin` no ha pasado, ordenados por `inicio`. Lee `data/eventos.json` / SQLite. El contrato añade `imagenUrl` (ruta o URL de la imagen, puede ser null).
+G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
 
