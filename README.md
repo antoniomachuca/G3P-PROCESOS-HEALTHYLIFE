@@ -34,16 +34,6 @@ La normativa para construir el código está en [`.agents/AGENTS.md`](.agents/AG
 - El título del pull request y los commits empiezan por `G3P-123`
 - En GitHub, `G3P-123` enlaza solo a la issue de Jira
 
-El agente controla el tablero con el MCP oficial de Atlassian, configurado en `.cursor/mcp.json`. La primera vez hay que iniciar sesión en Atlassian cuando Cursor lo pida.
-
-Para que Jira muestre **Create branch** dentro de la issue, un administrador del sitio tiene que conectar este repositorio:
-
-1. En Jira, Configuración → Apps → GitHub → Connect GitHub.
-2. Instalar GitHub for Jira en la cuenta `antoniomachuca`.
-3. Conceder acceso a `EJERCICIOS-GRUPO-PROCESOS`.
-
-Hasta que eso esté hecho, las ramas se crean en local con la clave de la issue en el nombre. El autolink de GitHub ya está activo.
-
 ## Contrato con los otros equipos
 
 `contracts/eventos.ejemplo.json` es el mock de intercambio. Los identificadores de usuario (`userId`), grupo (`communityGroupId`) y rutina (`routineId`) son strings opacos de E1, E4 y E5. Este módulo no implementa sus pantallas.
