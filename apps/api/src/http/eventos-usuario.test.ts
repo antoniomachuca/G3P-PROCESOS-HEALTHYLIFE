@@ -85,13 +85,13 @@ test("GET /api/v1/users/{user_id}/events devuelve la lista de eventos en formato
     const data = await res.json();
 
     assert.equal(data.user_id, "usuario-demo-001");
-    assert.equal(data.userId, "usuario-demo-001");
+    assert.equal(data.userId, undefined);
     assert.ok(Array.isArray(data.events));
     assert.equal(data.events.length, 2);
 
     const primerEvento = data.events[0];
     assert.equal(primerEvento.event_id, "evt_test1");
-    assert.equal(primerEvento.eventId, "evt_test1");
+    assert.equal(primerEvento.eventId, undefined);
     assert.equal(primerEvento.name, "Carrera 5K Campus");
     assert.equal(primerEvento.type, "running");
     assert.match(primerEvento.location, /Parque Central/);

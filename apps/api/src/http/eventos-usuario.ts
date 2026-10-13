@@ -31,49 +31,19 @@ export function fechasDeActividad(inicio: string, fin: string): string[] {
 }
 
 export type EventoUsuarioDTO = {
-  // Identificadores (soporte dual camelCase / snake_case)
-  eventId: string;
   event_id: string;
-  id: string;
-
-  // Nombre y título
   name: string;
-  titulo: string;
-
-  // Tipo y deporte
   type: string;
-  deporte: string;
-
-  // Ubicación
   location: string;
-  lugar: string;
-
-  // Plazas disponibles y aforo
-  availablePlaces: number;
   available_places: number;
-  plazasDisponibles: number;
-  aforoMaximo: number;
-
-  // Fechas de actividad y horas
-  activityDates: string[];
   activity_dates: string[];
-  inicio: string;
-  fin: string;
-
-  // Calorías estimadas (telemetría E2)
-  estimatedCalories: number;
   estimated_calories: number;
-
-  // Estado de inscripción
   enrolled: boolean;
-  inscrito: boolean;
 };
 
 export type RespuestaEventosUsuario = {
-  userId: string;
   user_id: string;
   events: EventoUsuarioDTO[];
-  eventos: EventoUsuarioDTO[];
 };
 
 export function adaptarEventoParaUsuario(evento: Evento, inscrito = true): EventoUsuarioDTO {
@@ -84,34 +54,14 @@ export function adaptarEventoParaUsuario(evento: Evento, inscrito = true): Event
   const fechas = fechasDeActividad(evento.inicio, evento.fin);
 
   return {
-    eventId: evento.id,
     event_id: evento.id,
-    id: evento.id,
-
     name: evento.titulo,
-    titulo: evento.titulo,
-
     type: evento.deporte,
-    deporte: evento.deporte,
-
     location: nombreLugar,
-    lugar: nombreLugar,
-
-    availablePlaces: evento.plazasDisponibles,
     available_places: evento.plazasDisponibles,
-    plazasDisponibles: evento.plazasDisponibles,
-    aforoMaximo: evento.aforoMaximo,
-
-    activityDates: fechas,
     activity_dates: fechas,
-    inicio: evento.inicio,
-    fin: evento.fin,
-
-    estimatedCalories: calorias,
     estimated_calories: calorias,
-
     enrolled: inscrito,
-    inscrito: inscrito,
   };
 }
 
@@ -158,10 +108,8 @@ export function manejarEventosUsuario(
   }
 
   const cuerpo: RespuestaEventosUsuario = {
-    userId: idLimpio,
     user_id: idLimpio,
     events: listaEventos,
-    eventos: listaEventos,
   };
 
   responder(res, 200, cuerpo);

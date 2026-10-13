@@ -93,7 +93,7 @@ curl http://127.0.0.1:3001/api/v1/users/usuario-demo-001/events
 curl http://127.0.0.1:3001/users/usuario-demo-001/events
 ```
 
-Devuelve `{ user_id, userId, events, eventos }`. Si el usuario tiene reservas confirmadas, devuelve sus eventos con `enrolled: true`. Si aún no tiene reservas, devuelve los eventos activos recomendados (`enrolled: false`). Incluye `activity_dates`, plazas disponibles y `estimated_calories` estimadas según el deporte y la duración.
+Devuelve `{ user_id, events }`. Si el usuario tiene reservas confirmadas, devuelve sus eventos con `enrolled: true`. Si aún no tiene reservas, devuelve los eventos activos recomendados (`enrolled: false`). Incluye `event_id`, `name`, `type`, `location`, `available_places`, `activity_dates` y `estimated_calories` estimadas según el deporte y la duración.
 
 HU-01 (G3P-8): `GET /api/v1/events` devuelve `{ "eventos": [...] }` solo con eventos `abierta` cuyo `fin` no ha pasado, ordenados por `inicio`. Lee `data/eventos.json` / SQLite. El contrato añade `imagenUrl` (ruta o URL de la imagen, puede ser null).
 G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
