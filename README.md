@@ -34,6 +34,10 @@ La normativa para construir el código está en [`.agents/AGENTS.md`](.agents/AG
 - El título del pull request y los commits empiezan por `G3P-123`
 - En GitHub, `G3P-123` enlaza solo a la issue de Jira
 
+## Registro de decisiones
+
+[`.agents/LOG.md`](.agents/LOG.md) recoge los cambios de opinión y de alcance del equipo, con su fecha, el motivo y el impacto en Jira. Cualquier agente o miembro del equipo debe leerlo antes de proponer o implementar un cambio de alcance; si el cambio nace en una conversación, se añade allí una entrada nueva.
+
 ## Contrato con los otros equipos
 
 `contracts/eventos.ejemplo.json` es el mock de intercambio. Los identificadores de usuario (`userId`), grupo (`communityGroupId`) y rutina (`routineId`) son strings opacos de E1, E4 y E5. Este módulo no implementa sus pantallas.
