@@ -30,7 +30,7 @@ if (esPrincipal) {
   const servidor = createServer((req, res) => {
     manejarReservas(store, req, res);
   });
-  servidor.listen(PUERTO, () => {
+  servidor.listen(PUERTO, "0.0.0.0", () => {
     console.log(`API de eventos y reservas en http://127.0.0.1:${PUERTO}/api/v1/events`);
   });
 }
