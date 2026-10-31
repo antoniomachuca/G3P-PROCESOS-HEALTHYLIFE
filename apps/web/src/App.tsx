@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, cancelarInscripcion, cargarEventos, reservarPlaza } from "./api";
+import { ApiError, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
@@ -63,6 +63,9 @@ function App() {
 
   useEffect(() => {
     void actualizarCatalogo();
+    void cargarInscripcionesUsuario(USUARIO_DEMO).then((mapa) => {
+      setReservas((prev) => ({ ...mapa, ...prev }));
+    });
   }, []);
 
   useEffect(() => {

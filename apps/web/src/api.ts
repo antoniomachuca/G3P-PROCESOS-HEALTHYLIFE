@@ -1,4 +1,4 @@
-import type { Evento, ResultadoReserva } from "./tipos";
+import type { EstadoReserva, Evento, ResultadoReserva } from "./tipos";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -55,6 +55,22 @@ export async function cancelarInscripcion(
   }
 
   return cuerpo as { id: string; eventoId: string; usuarioId: string; estado: string; plazasDisponibles: number; mensaje: string };
+}
+
+export async function cargarInscripcionesUsuario(usuarioId: string): Promise<Record<string, EstadoReserva>> {
+  try {
+    const respuesta = await fetch(`/api/v1/users/${encodeURIComponent(usuarioId)}/events?only_enrolled=true`);
+    if (!respuesta.ok) return {};
+    const datos = (await respuesta.json()) as { events?: Array<{ event_id?: string; id?: string }> };
+    const mapa: Record<string, EstadoReserva> = {};
+    for (const e of datos.events || []) {
+      const id = e.event_id || e.id;
+      if (id) mapa[id] = "confirmada";
+    }
+    return mapa;
+  } catch {
+    return {};
+  }
 }
 
 export async function crearEvento(datosEvento: Omit<Evento, "id" | "estado" | "plazasDisponibles">): Promise<Evento> {
