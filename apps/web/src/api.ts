@@ -37,6 +37,26 @@ export async function reservarPlaza(eventoId: string, usuarioId: string): Promis
   return cuerpo as ResultadoReserva;
 }
 
+export async function cancelarInscripcion(
+  eventoId: string,
+  usuarioId: string,
+): Promise<{ id: string; eventoId: string; usuarioId: string; estado: string; plazasDisponibles: number; mensaje: string }> {
+  const respuesta = await fetch(`/api/v1/events/${encodeURIComponent(eventoId)}/reservations`, {
+    method: "DELETE",
+    headers: { "X-User-Id": usuarioId },
+  });
+  const cuerpo = (await respuesta.json()) as { id: string; eventoId: string; usuarioId: string; estado: string; plazasDisponibles: number; mensaje: string } | { mensaje?: string };
+
+  if (!respuesta.ok) {
+    throw new ApiError(
+      respuesta.status,
+      "mensaje" in cuerpo && cuerpo.mensaje ? cuerpo.mensaje : "No se ha podido cancelar la inscripción.",
+    );
+  }
+
+  return cuerpo as { id: string; eventoId: string; usuarioId: string; estado: string; plazasDisponibles: number; mensaje: string };
+}
+
 export async function crearEvento(datosEvento: Omit<Evento, "id" | "estado" | "plazasDisponibles">): Promise<Evento> {
   const respuesta = await fetch("/api/v1/events", {
     method: "POST",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, cargarEventos, reservarPlaza } from "./api";
+import { ApiError, cancelarInscripcion, cargarEventos, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
@@ -109,16 +109,33 @@ function App() {
     }
   }
 
-  function gestionarCancelacion(eventoId: string) {
-    setReservas((actuales) => {
-      const nuevo = { ...actuales };
-      delete nuevo[eventoId];
-      return nuevo;
-    });
-    setAviso({
-      tipo: "exito",
-      texto: "Inscripción cancelada correctamente.",
-    });
+  async function gestionarCancelacion(eventoId: string) {
+    setAviso(null);
+    try {
+      const resultado = await cancelarInscripcion(eventoId, USUARIO_DEMO);
+      setReservas((actuales) => {
+        const nuevo = { ...actuales };
+        delete nuevo[eventoId];
+        return nuevo;
+      });
+      setEventos((actuales) =>
+        actuales.map((actual) =>
+          actual.id === eventoId ? { ...actual, plazasDisponibles: resultado.plazasDisponibles } : actual,
+        ),
+      );
+      setEventoSeleccionado((actual) =>
+        actual?.id === eventoId ? { ...actual, plazasDisponibles: resultado.plazasDisponibles } : actual,
+      );
+      setAviso({
+        tipo: "exito",
+        texto: resultado.mensaje || "Inscripción cancelada correctamente.",
+      });
+    } catch (error) {
+      setAviso({
+        tipo: "error",
+        texto: error instanceof ApiError ? error.message : "No se ha podido cancelar la inscripción.",
+      });
+    }
   }
 
   const eventosFiltrados = eventos.filter((evento) => {

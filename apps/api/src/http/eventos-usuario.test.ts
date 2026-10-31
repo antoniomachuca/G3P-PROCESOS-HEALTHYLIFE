@@ -17,8 +17,8 @@ function almacenEnMemoria(): SqliteEventStore {
     deporte: "running",
     nivel: "intermedio",
     descripcion: "Entrenamiento de carrera continua",
-    inicio: "2026-10-20T10:00:00+02:00",
-    fin: "2026-10-20T11:00:00+02:00",
+    inicio: "2028-10-20T10:00:00+02:00",
+    fin: "2028-10-20T11:00:00+02:00",
     lugar: {
       nombre: "Parque Central",
       puntoEncuentro: "Entrada principal",
@@ -41,8 +41,8 @@ function almacenEnMemoria(): SqliteEventStore {
     deporte: "yoga",
     nivel: "iniciacion",
     descripcion: "Sesión suave de yoga",
-    inicio: "2026-10-25T09:00:00+02:00",
-    fin: "2026-10-25T10:00:00+02:00",
+    inicio: "2028-10-25T09:00:00+02:00",
+    fin: "2028-10-25T10:00:00+02:00",
     lugar: {
       nombre: "Polideportivo",
       puntoEncuentro: "Sala 2",
@@ -96,7 +96,7 @@ test("GET /api/v1/users/{user_id}/events devuelve la lista de eventos en formato
     assert.equal(primerEvento.type, "running");
     assert.match(primerEvento.location, /Parque Central/);
     assert.equal(primerEvento.available_places, 15);
-    assert.deepEqual(primerEvento.activity_dates, ["2026-10-20"]);
+    assert.deepEqual(primerEvento.activity_dates, ["2028-10-20"]);
     assert.equal(primerEvento.estimated_calories, 500); // 1 hora de running
     assert.equal(primerEvento.enrolled, false);
   });

@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --no-warnings --loader ./test-loader.mjs --test test/cancelacion.test.ts"
+    "test": "node --no-warnings --loader ./test-loader.mjs --test test/cancelacion.test.ts test/cancelacion.adversarial.test.ts test/cancelacion.interaction.test.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

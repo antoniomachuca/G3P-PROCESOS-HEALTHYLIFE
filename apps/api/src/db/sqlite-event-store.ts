@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { EventStore, ResultadoReserva } from "../domain/event-store.ts";
+import type { EventStore, ResultadoCancelacion, ResultadoReserva } from "../domain/event-store.ts";
 import { fechaIsoConOffset } from "../domain/fecha.ts";
 import { assertEvento, assertReserva, type Evento, type Reserva } from "../domain/modelo.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
@@ -231,6 +231,176 @@ export class SqliteEventStore implements EventStore {
         reserva.estado === "confirmada" ? evento.plazasDisponibles - 1 : evento.plazasDisponibles;
       this.db.exec("COMMIT");
       return { reserva, plazasDisponibles };
+    } catch (error) {
+      try {
+        this.db.exec("ROLLBACK");
+      } catch {
+        // La transacción ya estaba cerrada.
+      }
+      throw error;
+    }
+  }
+
+  obtenerReserva(id: string): Reserva | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT id, evento_id, usuario_id, estado, creada_en
+         FROM reservas
+         WHERE id = ?`,
+      )
+      .get(id) as ReservaRow | undefined;
+    return row ? reservaDesdeFila(row) : undefined;
+  }
+
+  cancelarReserva(eventoId: string, usuarioId: string): ResultadoCancelacion {
+    const usuario = usuarioId.trim();
+    if (usuario.length === 0) {
+      throw new ErrorDeReserva("usuario_invalido", "El usuario de la reserva es obligatorio");
+    }
+
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const evento = this.obtenerEvento(eventoId);
+      if (!evento) {
+        throw new ErrorDeReserva("no_encontrado", "No existe ese evento");
+      }
+
+      const inicio = Date.parse(evento.inicio);
+      if (Number.isFinite(inicio) && Date.now() >= inicio) {
+        throw new ErrorDeReserva(
+          "evento_iniciado",
+          "No se puede cancelar una inscripción de un evento que ya ha comenzado",
+        );
+      }
+
+      const row = this.db
+        .prepare(
+          `SELECT id, evento_id, usuario_id, estado, creada_en
+           FROM reservas
+           WHERE evento_id = ? AND usuario_id = ? AND estado IN ('confirmada', 'en_espera')
+           ORDER BY creada_en DESC
+           LIMIT 1`,
+        )
+        .get(eventoId, usuario) as ReservaRow | undefined;
+
+      if (!row) {
+        const canceladaPrevia = this.db
+          .prepare(
+            `SELECT id FROM reservas
+             WHERE evento_id = ? AND usuario_id = ? AND estado = 'cancelada'`,
+          )
+          .get(eventoId, usuario);
+        if (canceladaPrevia) {
+          throw new ErrorDeReserva("ya_cancelada", "La inscripción ya estaba cancelada");
+        }
+        throw new ErrorDeReserva(
+          "no_encontrado",
+          "No se ha encontrado ninguna reserva activa para este evento",
+        );
+      }
+
+      this.db
+        .prepare(`UPDATE reservas SET estado = 'cancelada' WHERE id = ?`)
+        .run(row.id);
+
+      let plazasDisponibles = evento.plazasDisponibles;
+      if (row.estado === "confirmada") {
+        this.db
+          .prepare(
+            `UPDATE eventos
+             SET plazas_libres = MIN(capacidad, plazas_libres + 1)
+             WHERE id = ?`,
+          )
+          .run(eventoId);
+        plazasDisponibles = Math.min(evento.aforoMaximo, evento.plazasDisponibles + 1);
+      }
+
+      this.db.exec("COMMIT");
+
+      return {
+        reserva: {
+          id: row.id,
+          eventoId: row.evento_id,
+          usuarioId: row.usuario_id,
+          estado: "cancelada",
+          creadaEn: row.creada_en,
+        },
+        plazasDisponibles,
+      };
+    } catch (error) {
+      try {
+        this.db.exec("ROLLBACK");
+      } catch {
+        // La transacción ya estaba cerrada.
+      }
+      throw error;
+    }
+  }
+
+  cancelarReservaPorId(reservaId: string, usuarioId?: string): ResultadoCancelacion {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.db
+        .prepare(
+          `SELECT id, evento_id, usuario_id, estado, creada_en
+           FROM reservas
+           WHERE id = ?`,
+        )
+        .get(reservaId) as ReservaRow | undefined;
+
+      if (!row) {
+        throw new ErrorDeReserva("no_encontrado", "No se ha encontrado la reserva");
+      }
+
+      if (usuarioId && row.usuario_id !== usuarioId.trim()) {
+        throw new ErrorDeReserva("usuario_invalido", "La reserva no pertenece a este usuario");
+      }
+
+      if (row.estado === "cancelada") {
+        throw new ErrorDeReserva("ya_cancelada", "La inscripción ya estaba cancelada");
+      }
+
+      const evento = this.obtenerEvento(row.evento_id);
+      if (!evento) {
+        throw new ErrorDeReserva("no_encontrado", "No existe ese evento");
+      }
+
+      const inicio = Date.parse(evento.inicio);
+      if (Number.isFinite(inicio) && Date.now() >= inicio) {
+        throw new ErrorDeReserva(
+          "evento_iniciado",
+          "No se puede cancelar una inscripción de un evento que ya ha comenzado",
+        );
+      }
+
+      this.db
+        .prepare(`UPDATE reservas SET estado = 'cancelada' WHERE id = ?`)
+        .run(reservaId);
+
+      let plazasDisponibles = evento.plazasDisponibles;
+      if (row.estado === "confirmada") {
+        this.db
+          .prepare(
+            `UPDATE eventos
+             SET plazas_libres = MIN(capacidad, plazas_libres + 1)
+             WHERE id = ?`,
+          )
+          .run(row.evento_id);
+        plazasDisponibles = Math.min(evento.aforoMaximo, evento.plazasDisponibles + 1);
+      }
+
+      this.db.exec("COMMIT");
+
+      return {
+        reserva: {
+          id: row.id,
+          eventoId: row.evento_id,
+          usuarioId: row.usuario_id,
+          estado: "cancelada",
+          creadaEn: row.creada_en,
+        },
+        plazasDisponibles,
+      };
     } catch (error) {
       try {
         this.db.exec("ROLLBACK");
