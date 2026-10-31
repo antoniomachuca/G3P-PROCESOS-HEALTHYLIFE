@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ApiError, cargarEventos, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
+import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
+
 
 
 const USUARIO_DEMO = import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010";
@@ -107,6 +109,18 @@ function App() {
     }
   }
 
+  function gestionarCancelacion(eventoId: string) {
+    setReservas((actuales) => {
+      const nuevo = { ...actuales };
+      delete nuevo[eventoId];
+      return nuevo;
+    });
+    setAviso({
+      tipo: "exito",
+      texto: "Inscripción cancelada correctamente.",
+    });
+  }
+
   const eventosFiltrados = eventos.filter((evento) => {
     const texto = `${evento.titulo} ${evento.lugar.nombre} ${evento.lugar.municipio} ${evento.deporte}`.toLowerCase();
     return texto.includes(consulta.toLowerCase().trim()) && (deporteActivo === "todos" || evento.deporte === deporteActivo);
@@ -196,8 +210,17 @@ function App() {
                 estadoReserva={reservas[eventoSeleccionado.id]}
                 onReservar={() => void gestionarReserva(eventoSeleccionado)}
               />
+              {reservas[eventoSeleccionado.id] && (
+                <BotonCancelarInscripcion
+                  eventoId={eventoSeleccionado.id}
+                  inicioIso={eventoSeleccionado.inicio}
+                  tituloEvento={eventoSeleccionado.titulo}
+                  onConfirmarCancelacion={gestionarCancelacion}
+                />
+              )}
               <p className="nota-reserva">La confirmación se realiza en el momento.</p>
             </aside>
+
           </div>
         </main>
       ) : (
@@ -257,6 +280,7 @@ function App() {
                     estadoReserva={reservas[evento.id]}
                     onAbrir={() => setEventoSeleccionado(evento)}
                     onReservar={() => void gestionarReserva(evento)}
+                    onConfirmarCancelacion={gestionarCancelacion}
                   />
                 ))}
               </div>
@@ -314,12 +338,14 @@ function TarjetaEvento({
   estadoReserva,
   onAbrir,
   onReservar,
+  onConfirmarCancelacion,
 }: {
   evento: Evento;
   reservando: boolean;
   estadoReserva?: EstadoReserva;
   onAbrir: () => void;
   onReservar: () => void;
+  onConfirmarCancelacion?: (eventoId: string) => void;
 }) {
   const porcentajeOcupacion = Math.min(100, Math.max(0, ((evento.aforoMaximo - evento.plazasDisponibles) / evento.aforoMaximo) * 100));
 
@@ -346,7 +372,16 @@ function TarjetaEvento({
       </div>
       <div className="tarjeta-evento__acciones">
         <button className="boton boton--secundario" type="button" onClick={onAbrir}>Ver ficha</button>
-        <BotonReserva evento={evento} reservando={reservando} estadoReserva={estadoReserva} onReservar={onReservar} />
+        {estadoReserva ? (
+          <BotonCancelarInscripcion
+            eventoId={evento.id}
+            inicioIso={evento.inicio}
+            tituloEvento={evento.titulo}
+            onConfirmarCancelacion={onConfirmarCancelacion}
+          />
+        ) : (
+          <BotonReserva evento={evento} reservando={reservando} estadoReserva={estadoReserva} onReservar={onReservar} />
+        )}
       </div>
     </article>
   );
