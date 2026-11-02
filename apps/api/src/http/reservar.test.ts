@@ -18,8 +18,8 @@ function eventoDePrueba(cambios: Partial<Evento> = {}): Evento {
     deporte: "padel",
     nivel: "iniciacion",
     descripcion: "Partido corto",
-    inicio: "2026-10-18T10:00:00+02:00",
-    fin: "2026-10-18T11:30:00+02:00",
+    inicio: "2028-10-18T10:00:00+02:00",
+    fin: "2028-10-18T11:30:00+02:00",
     lugar: {
       nombre: "Pistas",
       puntoEncuentro: "Entrada",

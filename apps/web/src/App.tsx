@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { ApiError, cargarEventos, reservarPlaza } from "./api";
+import { ApiError, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
+import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
+
 
 
 const USUARIO_DEMO = import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010";
@@ -61,6 +63,9 @@ function App() {
 
   useEffect(() => {
     void actualizarCatalogo();
+    void cargarInscripcionesUsuario(USUARIO_DEMO).then((mapa) => {
+      setReservas((prev) => ({ ...mapa, ...prev }));
+    });
   }, []);
 
   useEffect(() => {
@@ -104,6 +109,35 @@ function App() {
       }
     } finally {
       setReservandoId("");
+    }
+  }
+
+  async function gestionarCancelacion(eventoId: string) {
+    setAviso(null);
+    try {
+      const resultado = await cancelarInscripcion(eventoId, USUARIO_DEMO);
+      setReservas((actuales) => {
+        const nuevo = { ...actuales };
+        delete nuevo[eventoId];
+        return nuevo;
+      });
+      setEventos((actuales) =>
+        actuales.map((actual) =>
+          actual.id === eventoId ? { ...actual, plazasDisponibles: resultado.plazasDisponibles } : actual,
+        ),
+      );
+      setEventoSeleccionado((actual) =>
+        actual?.id === eventoId ? { ...actual, plazasDisponibles: resultado.plazasDisponibles } : actual,
+      );
+      setAviso({
+        tipo: "exito",
+        texto: resultado.mensaje || "Inscripción cancelada correctamente.",
+      });
+    } catch (error) {
+      setAviso({
+        tipo: "error",
+        texto: error instanceof ApiError ? error.message : "No se ha podido cancelar la inscripción.",
+      });
     }
   }
 
@@ -196,8 +230,17 @@ function App() {
                 estadoReserva={reservas[eventoSeleccionado.id]}
                 onReservar={() => void gestionarReserva(eventoSeleccionado)}
               />
+              {reservas[eventoSeleccionado.id] && (
+                <BotonCancelarInscripcion
+                  eventoId={eventoSeleccionado.id}
+                  inicioIso={eventoSeleccionado.inicio}
+                  tituloEvento={eventoSeleccionado.titulo}
+                  onConfirmarCancelacion={gestionarCancelacion}
+                />
+              )}
               <p className="nota-reserva">La confirmación se realiza en el momento.</p>
             </aside>
+
           </div>
         </main>
       ) : (
@@ -257,6 +300,7 @@ function App() {
                     estadoReserva={reservas[evento.id]}
                     onAbrir={() => setEventoSeleccionado(evento)}
                     onReservar={() => void gestionarReserva(evento)}
+                    onConfirmarCancelacion={gestionarCancelacion}
                   />
                 ))}
               </div>
@@ -314,12 +358,14 @@ function TarjetaEvento({
   estadoReserva,
   onAbrir,
   onReservar,
+  onConfirmarCancelacion,
 }: {
   evento: Evento;
   reservando: boolean;
   estadoReserva?: EstadoReserva;
   onAbrir: () => void;
   onReservar: () => void;
+  onConfirmarCancelacion?: (eventoId: string) => void;
 }) {
   const porcentajeOcupacion = Math.min(100, Math.max(0, ((evento.aforoMaximo - evento.plazasDisponibles) / evento.aforoMaximo) * 100));
 
@@ -346,7 +392,16 @@ function TarjetaEvento({
       </div>
       <div className="tarjeta-evento__acciones">
         <button className="boton boton--secundario" type="button" onClick={onAbrir}>Ver ficha</button>
-        <BotonReserva evento={evento} reservando={reservando} estadoReserva={estadoReserva} onReservar={onReservar} />
+        {estadoReserva ? (
+          <BotonCancelarInscripcion
+            eventoId={evento.id}
+            inicioIso={evento.inicio}
+            tituloEvento={evento.titulo}
+            onConfirmarCancelacion={onConfirmarCancelacion}
+          />
+        ) : (
+          <BotonReserva evento={evento} reservando={reservando} estadoReserva={estadoReserva} onReservar={onReservar} />
+        )}
       </div>
     </article>
   );

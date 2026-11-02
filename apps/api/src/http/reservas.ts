@@ -58,50 +58,122 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     return;
   }
 
-  const eventoId = idDeEvento(req);
-  if (!eventoId || req.method !== "POST") {
-    responder(res, req.method === "POST" ? 404 : 405, { mensaje: "Ruta no encontrada" });
+  const rutaReserva = parsearRutaReservas(ruta);
+  if (!rutaReserva) {
+    responder(res, 404, { mensaje: "Ruta no encontrada" });
     return;
   }
 
-  const usuarioId = cabecera(req, "x-user-id");
-  if (!usuarioId) {
-    responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
-    return;
-  }
-
-  try {
-    const resultado = store.reservar(decodeURIComponent(eventoId), usuarioId);
-    responder(res, 201, {
-      id: resultado.reserva.id,
-      eventoId: resultado.reserva.eventoId,
-      usuarioId: resultado.reserva.usuarioId,
-      estado: resultado.reserva.estado,
-      creadaEn: resultado.reserva.creadaEn,
-      plazasDisponibles: resultado.plazasDisponibles,
-    });
-  } catch (error) {
-    if (error instanceof ErrorDeReserva) {
-      const status = error.codigo === "no_encontrado" ? 404 : error.codigo === "usuario_invalido" ? 400 : 409;
-      responder(res, status, { mensaje: error.message });
+  if (req.method === "POST") {
+    if (rutaReserva.tipo !== "evento_reservas" || rutaReserva.reservaId) {
+      responder(res, 405, { mensaje: "Método no permitido" });
       return;
     }
-    responder(res, 500, { mensaje: "No se ha podido completar la reserva" });
+
+    const usuarioId = cabecera(req, "x-user-id");
+    if (!usuarioId) {
+      responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
+      return;
+    }
+
+    try {
+      const resultado = store.reservar(rutaReserva.eventoId, usuarioId);
+      responder(res, 201, {
+        id: resultado.reserva.id,
+        eventoId: resultado.reserva.eventoId,
+        usuarioId: resultado.reserva.usuarioId,
+        estado: resultado.reserva.estado,
+        creadaEn: resultado.reserva.creadaEn,
+        plazasDisponibles: resultado.plazasDisponibles,
+      });
+    } catch (error) {
+      manejarErrorReserva(res, error, "No se ha podido completar la reserva");
+    }
+    return;
   }
+
+  if (req.method === "DELETE" || req.method === "PATCH") {
+    const usuarioId = cabecera(req, "x-user-id");
+
+    try {
+      let resultado;
+      if (rutaReserva.tipo === "reserva_directa" || (rutaReserva.tipo === "evento_reservas" && rutaReserva.reservaId)) {
+        const idAUsar = rutaReserva.reservaId!;
+        if (store.cancelarReservaPorId) {
+          resultado = store.cancelarReservaPorId(idAUsar, usuarioId || undefined);
+        } else if (rutaReserva.tipo === "evento_reservas") {
+          resultado = store.cancelarReserva(rutaReserva.eventoId, usuarioId);
+        } else {
+          responder(res, 501, { mensaje: "Operación no soportada por el almacén" });
+          return;
+        }
+      } else {
+        if (!usuarioId) {
+          responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
+          return;
+        }
+        resultado = store.cancelarReserva(rutaReserva.eventoId, usuarioId);
+      }
+
+      responder(res, 200, {
+        id: resultado.reserva.id,
+        eventoId: resultado.reserva.eventoId,
+        usuarioId: resultado.reserva.usuarioId,
+        estado: resultado.reserva.estado,
+        plazasDisponibles: resultado.plazasDisponibles,
+        mensaje: "Inscripción cancelada correctamente",
+      });
+    } catch (error) {
+      manejarErrorReserva(res, error, "No se ha podido cancelar la inscripción");
+    }
+    return;
+  }
+
+  responder(res, 405, { mensaje: "Método no permitido" });
 }
+
+type RutaReserva =
+  | { tipo: "evento_reservas"; eventoId: string; reservaId?: string }
+  | { tipo: "reserva_directa"; reservaId: string };
+
+function parsearRutaReservas(ruta: string): RutaReserva | null {
+  const mEvento = ruta.match(/^(?:\/api\/v1)?\/events\/([^/]+)\/reservations(?:\/([^/]+))?\/?$/);
+  if (mEvento) {
+    return {
+      tipo: "evento_reservas",
+      eventoId: decodeURIComponent(mEvento[1]),
+      reservaId: mEvento[2] ? decodeURIComponent(mEvento[2]) : undefined,
+    };
+  }
+  const mDirecta = ruta.match(/^(?:\/api\/v1)?\/reservations\/([^/]+)\/?$/);
+  if (mDirecta) {
+    return {
+      tipo: "reserva_directa",
+      reservaId: decodeURIComponent(mDirecta[1]),
+    };
+  }
+  return null;
+}
+
+function manejarErrorReserva(res: ServerResponse, error: unknown, fallbackMensaje: string): void {
+  if (error instanceof ErrorDeReserva) {
+    let status = 400;
+    if (error.codigo === "no_encontrado") status = 404;
+    else if (error.codigo === "duplicada" || error.codigo === "ya_cancelada") status = 409;
+    else if (error.codigo === "evento_iniciado") status = 400;
+    else if (error.codigo === "usuario_invalido") status = 400;
+    responder(res, status, { mensaje: error.message });
+    return;
+  }
+  responder(res, 500, { mensaje: fallbackMensaje });
+}
+
 
 function idDeUsuarioEnRuta(req: IncomingMessage): string | undefined {
   const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
   const coincidencia = ruta.match(/^(?:\/api\/v1)?\/users\/([^/]+)\/events\/?$/);
   return coincidencia ? decodeURIComponent(coincidencia[1]) : undefined;
 }
-
-function idDeEvento(req: IncomingMessage): string | undefined {
-  const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
-  const coincidencia = ruta.match(/^(?:\/api\/v1)?\/events\/([^/]+)\/reservations$/);
-  return coincidencia?.[1];
-}
-
 
 function cabecera(req: IncomingMessage, nombre: string): string {
   const valor = req.headers[nombre];
@@ -117,7 +189,7 @@ function aplicarCors(req: IncomingMessage, res: ServerResponse): void {
   res.setHeader("Access-Control-Allow-Origin", origen);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-User-Id");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, OPTIONS");
 }
 
 function responder(res: ServerResponse, status: number, cuerpo: unknown): void {

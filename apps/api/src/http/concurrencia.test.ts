@@ -23,8 +23,8 @@ function ultimaPlaza(): Evento {
     deporte: "running",
     nivel: "intermedio",
     descripcion: "Solo queda un sitio",
-    inicio: "2026-10-18T10:00:00+02:00",
-    fin: "2026-10-18T11:00:00+02:00",
+    inicio: "2028-10-18T10:00:00+02:00",
+    fin: "2028-10-18T11:00:00+02:00",
     lugar: {
       nombre: "Pista",
       puntoEncuentro: "Salida",

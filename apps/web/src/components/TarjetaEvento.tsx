@@ -1,13 +1,35 @@
 import { useState } from 'react';
-import type { Evento } from '../tipos';
+import type { EstadoReserva, Evento } from '../tipos';
 import { NOMBRE_DEPORTE, estadoPlazas, fechaHora, textoCupo, textoInsignia } from '../formato';
 import { IconoCalendario, IconoLugar, IconoReserva } from './Iconos';
+import { BotonCancelarInscripcion } from './BotonCancelarInscripcion';
 
-export function TarjetaEvento({ evento }: { evento: Evento }) {
+export type TarjetaEventoProps = {
+  evento: Evento;
+  tieneReserva?: boolean;
+  estadoReserva?: EstadoReserva;
+  onConfirmarCancelacion?: (eventoId: string) => void;
+  onReservar?: () => void;
+  onAbrir?: () => void;
+  reservando?: boolean;
+  fechaReferencia?: Date | number;
+};
+
+export function TarjetaEvento({
+  evento,
+  tieneReserva,
+  estadoReserva,
+  onConfirmarCancelacion,
+  onReservar,
+  onAbrir,
+  reservando,
+  fechaReferencia,
+}: TarjetaEventoProps) {
   const [imagenRota, setImagenRota] = useState(false);
   const estado = estadoPlazas(evento.plazasDisponibles);
   const ocupadas = evento.aforoMaximo - evento.plazasDisponibles;
   const porcentaje = Math.min(100, Math.max(0, Math.round((ocupadas / evento.aforoMaximo) * 100)));
+  const usuarioInscrito = Boolean(tieneReserva || estadoReserva);
 
   return (
     <article className="tarjeta">
@@ -60,16 +82,37 @@ export function TarjetaEvento({ evento }: { evento: Evento }) {
         </div>
       </div>
 
-      {/* Botones del diseño. Sin acción: el detalle es HU-02 y la reserva otra historia. */}
       <div className="tarjeta__acciones">
-        <button type="button" className="boton boton--secundario">
-          Ver detalle
-        </button>
-        <button type="button" className="boton boton--primario">
-          <IconoReserva />
-          <span>Reservar</span>
-        </button>
+        {usuarioInscrito ? (
+          <BotonCancelarInscripcion
+            eventoId={evento.id}
+            inicioIso={evento.inicio}
+            tituloEvento={evento.titulo}
+            onConfirmarCancelacion={onConfirmarCancelacion}
+            fechaReferencia={fechaReferencia}
+          />
+        ) : (
+          <>
+            <button
+              type="button"
+              className="boton boton--secundario"
+              onClick={onAbrir}
+            >
+              Ver detalle
+            </button>
+            <button
+              type="button"
+              className="boton boton--primario"
+              onClick={onReservar}
+              disabled={reservando || evento.plazasDisponibles <= 0}
+            >
+              <IconoReserva />
+              <span>{reservando ? 'Reservando...' : 'Reservar'}</span>
+            </button>
+          </>
+        )}
       </div>
     </article>
   );
 }
+
