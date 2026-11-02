@@ -71,7 +71,6 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
   }
 
   // HU-08 / G3P-56: PATCH /api/v1/events/{id} con los campos editables del evento.
-  const eventoEnRuta = ruta.match(/^\/api\/v1\/events\/([^/]+)\/?$/);
   if (eventoEnRuta && req.method === "PATCH") {
     const eventoId = decodeURIComponent(eventoEnRuta[1]);
     let body = "";
