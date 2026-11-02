@@ -4,6 +4,7 @@ import type { EventStore, ResultadoCancelacion, ResultadoReserva } from "../doma
 import { fechaIsoConOffset } from "../domain/fecha.ts";
 import { assertEvento, assertReserva, type Evento, type Reserva } from "../domain/modelo.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
+import { ErrorDeEdicion, validarCambiosEvento } from "../domain/edicion-evento.ts";
 
 type EventoRow = {
   id: string;
@@ -183,6 +184,58 @@ export class SqliteEventStore implements EventStore {
     return rows.map(eventoDesdeFila);
   }
 
+
+  actualizarEvento(id: string, cuerpo: unknown, ahora: Date = new Date()): Evento {
+    // BEGIN IMMEDIATE: ninguna reserva puede colarse entre la comprobación del aforo y la escritura.
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const actual = this.obtenerEvento(id);
+      if (!actual) {
+        throw new ErrorDeEdicion("no_encontrado", "Evento no encontrado");
+      }
+      const cambios = validarCambiosEvento(cuerpo, actual, ahora);
+      const capacidad = cambios.aforoMaximo ?? actual.aforoMaximo;
+
+      // Las plazas libres se recalculan en SQL a partir de las ocupadas, y el WHERE vuelve a
+      // impedir una capacidad por debajo de ellas aunque alguien se salte la validación.
+      const resultado = this.db
+        .prepare(
+          `UPDATE eventos SET
+             titulo = ?, descripcion = ?, inicio = ?, fin = ?, nivel = ?,
+             lugar_punto_encuentro = ?, material = ?,
+             plazas_libres = ? - (capacidad - plazas_libres),
+             capacidad = ?
+           WHERE id = ? AND capacidad - plazas_libres <= ?`,
+        )
+        .run(
+          cambios.titulo ?? actual.titulo,
+          cambios.descripcion ?? actual.descripcion,
+          cambios.inicio ?? actual.inicio,
+          cambios.fin ?? actual.fin,
+          cambios.nivel ?? actual.nivel,
+          cambios.puntoEncuentro ?? actual.lugar.puntoEncuentro,
+          JSON.stringify(cambios.material ?? actual.material),
+          capacidad,
+          capacidad,
+          id,
+          capacidad,
+        );
+      if (Number(resultado.changes) !== 1) {
+        throw new ErrorDeEdicion("aforo_insuficiente", "La capacidad no puede ser menor al número de usuarios ya inscritos");
+      }
+
+      const actualizado = this.obtenerEvento(id)!;
+      this.db.exec("COMMIT");
+      return actualizado;
+    } catch (error) {
+      try {
+        this.db.exec("ROLLBACK");
+      } catch {
+        // La transacción ya estaba cerrada.
+      }
+      throw error;
+    }
+  }
 
   reservar(eventoId: string, usuarioId: string): ResultadoReserva {
     const usuario = usuarioId.trim();

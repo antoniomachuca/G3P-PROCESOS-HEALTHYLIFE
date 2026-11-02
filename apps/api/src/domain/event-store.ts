@@ -22,5 +22,7 @@ export interface EventStore {
   cancelarReservaPorId?(reservaId: string, usuarioId?: string): ResultadoCancelacion;
   listarEventosPorUsuario(usuarioId: string): Evento[];
   listarReservasPorUsuario(usuarioId: string): Reserva[];
+  /** Aplica cambios validados en una transacción y devuelve el evento actualizado. */
+  actualizarEvento(id: string, cuerpo: unknown, ahora?: Date): Evento;
 }
 
