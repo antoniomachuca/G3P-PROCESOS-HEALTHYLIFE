@@ -375,3 +375,19 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 
 
 
+
+/* HU-08 / G3P-55: formulario de edición de una actividad */
+.formulario-edicion__cabecera { padding-bottom: 22px; border-bottom: 1px solid var(--border); }
+.formulario-edicion { display: grid; gap: 22px; max-width: 860px; padding-top: 24px; }
+.formulario-edicion__grupo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 20px; margin: 0; padding: 18px 19px 20px; border: 1px solid var(--border); border-top: 3px solid var(--urjc-red); }
+.formulario-edicion__grupo legend { padding: 0 6px; color: var(--urjc-red); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.campo { display: grid; gap: 6px; min-width: 0; }
+.campo--ancho { grid-column: 1 / -1; }
+.campo__etiqueta { color: var(--urjc-black); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.campo input, .campo select, .campo textarea { width: 100%; min-height: 40px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--urjc-white); color: var(--urjc-black); font: inherit; font-size: 15px; }
+.campo textarea { resize: vertical; }
+.campo input:focus-visible, .campo select:focus-visible, .campo textarea:focus-visible { outline: 2px solid var(--urjc-red); outline-offset: 1px; }
+.campo--solo-lectura input { background: var(--surface-soft); color: var(--muted); cursor: not-allowed; }
+.campo--solo-lectura .campo__etiqueta::after { content: " · solo lectura"; color: var(--muted); font-weight: 400; text-transform: none; }
+.formulario-edicion__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
+.ficha-titulo__acciones { margin-top: 16px; }

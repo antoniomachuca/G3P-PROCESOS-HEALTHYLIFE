@@ -20,6 +20,18 @@ export async function cargarEventos(): Promise<Evento[]> {
   return datos.eventos;
 }
 
+/** Lee un evento de la base con sus datos actuales (GET /api/v1/events/{id}). */
+export async function cargarEvento(eventoId: string): Promise<Evento> {
+  const respuesta = await fetch(`/api/v1/events/${encodeURIComponent(eventoId)}`);
+  if (!respuesta.ok) {
+    throw new ApiError(
+      respuesta.status,
+      respuesta.status === 404 ? "La actividad ya no existe." : "No se han podido cargar los datos de la actividad.",
+    );
+  }
+  return (await respuesta.json()) as Evento;
+}
+
 export async function reservarPlaza(eventoId: string, usuarioId: string): Promise<ResultadoReserva> {
   const respuesta = await fetch(`/api/v1/events/${encodeURIComponent(eventoId)}/reservations`, {
     method: "POST",
