@@ -28,6 +28,17 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     return;
   }
 
+  // Ficha completa de un evento, también fuera del catálogo activo: el formulario de edición la precarga.
+  const eventoEnRuta = ruta.match(/^\/api\/v1\/events\/([^/]+)\/?$/);
+  if (req.method === "GET" && eventoEnRuta) {
+    const evento = store.obtenerEvento(decodeURIComponent(eventoEnRuta[1]));
+    if (!evento) {
+      responder(res, 404, { mensaje: "Evento no encontrado" });
+      return;
+    }
+    responder(res, 200, evento);
+    return;
+  }
 
 
   if (req.method === "POST" && ruta === "/api/v1/events") {

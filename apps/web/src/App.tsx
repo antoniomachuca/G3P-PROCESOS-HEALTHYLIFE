@@ -3,6 +3,7 @@ import { ApiError, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuari
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
+import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
 
 
 
@@ -43,6 +44,7 @@ function App() {
   const [deporteActivo, setDeporteActivo] = useState<Deporte | "todos">("todos");
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
   const [creandoEvento, setCreandoEvento] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [reservandoId, setReservandoId] = useState("");
   const [reservas, setReservas] = useState<Record<string, EstadoReserva>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -156,17 +158,26 @@ function App() {
           <span className="marca__nombre">Healthy Life</span>
         </a>
         <nav className="navegacion" aria-label="Navegación principal">
-          <a className={!eventoSeleccionado && !creandoEvento ? "navegacion__activo" : ""} href="#catalogo" onClick={() => { setEventoSeleccionado(null); setCreandoEvento(false); }}>
+          <a className={!eventoSeleccionado && !creandoEvento ? "navegacion__activo" : ""} href="#catalogo" onClick={() => { setEventoSeleccionado(null); setCreandoEvento(false); setEditandoId(null); }}>
             Actividades
           </a>
-          <button className="boton boton--primario" style={{ minHeight: '34px', padding: '6px 12px', fontSize: '13px' }} onClick={() => { setEventoSeleccionado(null); setCreandoEvento(true); }}>
+          <button className="boton boton--primario" style={{ minHeight: '34px', padding: '6px 12px', fontSize: '13px' }} onClick={() => { setEventoSeleccionado(null); setEditandoId(null); setCreandoEvento(true); }}>
             Publicar actividad
           </button>
         </nav>
         <span className="entorno-demo">Entorno de demostración</span>
       </header>
 
-      {creandoEvento ? (
+      {editandoId ? (
+        <FormularioEdicionEvento
+          eventoId={editandoId}
+          onGuardar={() => {
+            // El envío a la API llega con el endpoint de actualización (G3P-56).
+            setAviso({ tipo: "error", texto: "El guardado de cambios aún no está disponible." });
+          }}
+          onCancelar={() => setEditandoId(null)}
+        />
+      ) : creandoEvento ? (
         <FormularioEvento 
           onCreado={(nuevoEvento) => {
             setEventos(prev => [...prev, nuevoEvento].sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime()));
@@ -191,6 +202,11 @@ function App() {
               <h1>{eventoSeleccionado.titulo}</h1>
               <p>{eventoSeleccionado.descripcion}</p>
               <span className="nivel">Nivel {eventoSeleccionado.nivel}</span>
+              <div className="ficha-titulo__acciones">
+                <button className="boton boton--secundario" type="button" onClick={() => setEditandoId(eventoSeleccionado.id)}>
+                  Editar actividad
+                </button>
+              </div>
             </div>
           </div>
           <div className="ficha-cuerpo">
