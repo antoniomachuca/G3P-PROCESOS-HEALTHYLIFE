@@ -90,6 +90,12 @@ curl http://127.0.0.1:3001/users/usuario-demo-001/events
 Devuelve `{ user_id, events }`. Si el usuario tiene reservas confirmadas, devuelve sus eventos con `enrolled: true`. Si aún no tiene reservas, devuelve los eventos activos recomendados (`enrolled: false`). Incluye `event_id`, `name`, `type`, `location`, `available_places`, `activity_dates` y `estimated_calories` estimadas según el deporte y la duración.
 
 HU-01 (G3P-8): `GET /api/v1/events` devuelve `{ "eventos": [...] }` solo con eventos `abierta` cuyo `fin` no ha pasado, ordenados por `inicio`. Lee `data/eventos.json` / SQLite. El contrato añade `imagenUrl` (ruta o URL de la imagen, puede ser null).
+HU-08 (G3P-56): `PATCH /api/v1/events/{id}` actualiza los campos editables de un evento: `titulo`, `descripcion`, `inicio`, `fin`, `nivel`, `lugar.puntoEncuentro`, `material` y `aforoMaximo`. Solo se envían los que cambian, con las mismas claves del contrato, y responde `200` con el evento actualizado. Si la capacidad nueva es menor que las plazas ya ocupadas responde `409` («La capacidad no puede ser menor al número de usuarios ya inscritos»). Un `inicio` que no sea futuro, un `fin` anterior al inicio o un campo bloqueado (`deporte`, el resto de `lugar`, `plazasDisponibles`, `estado`, `organizadorId`…) responden `400`. Las plazas libres se recalculan en la misma transacción: `plazasDisponibles = aforoMaximo - ocupadas`.
+
+```bash
+curl -X PATCH http://127.0.0.1:3001/api/v1/events/evt_001 -H 'Content-Type: application/json' -d '{"aforoMaximo": 10, "lugar": {"puntoEncuentro": "Puerta norte"}}'
+```
+
 G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
 
 

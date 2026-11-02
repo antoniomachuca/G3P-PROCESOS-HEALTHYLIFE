@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { EventStore } from "../domain/event-store.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
+import { ErrorDeEdicion } from "../domain/edicion-evento.ts";
 import { eventosActivos } from "../domain/catalogo.ts";
 import { manejarEventosUsuario } from "./eventos-usuario.ts";
 
@@ -53,6 +54,29 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
         responder(res, 201, nuevoEvento);
       } catch (error: any) {
         responder(res, 400, { mensaje: error.message || "Datos inválidos" });
+      }
+    });
+    return;
+  }
+
+  // HU-08 / G3P-56: PATCH /api/v1/events/{id} con los campos editables del evento.
+  const eventoEnRuta = ruta.match(/^\/api\/v1\/events\/([^/]+)\/?$/);
+  if (eventoEnRuta && req.method === "PATCH") {
+    const eventoId = decodeURIComponent(eventoEnRuta[1]);
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      let cuerpo: unknown;
+      try {
+        cuerpo = JSON.parse(body);
+      } catch {
+        responder(res, 400, { mensaje: "El cuerpo de la petición no es JSON válido" });
+        return;
+      }
+      try {
+        responder(res, 200, store.actualizarEvento(eventoId, cuerpo));
+      } catch (error) {
+        manejarErrorEdicion(res, error);
       }
     });
     return;
@@ -168,6 +192,22 @@ function manejarErrorReserva(res: ServerResponse, error: unknown, fallbackMensaj
   responder(res, 500, { mensaje: fallbackMensaje });
 }
 
+
+const ESTADO_ERROR_EDICION: Record<ErrorDeEdicion["codigo"], number> = {
+  no_encontrado: 404,
+  datos_invalidos: 400,
+  campo_bloqueado: 400,
+  fecha_pasada: 400,
+  aforo_insuficiente: 409,
+};
+
+function manejarErrorEdicion(res: ServerResponse, error: unknown): void {
+  if (error instanceof ErrorDeEdicion) {
+    responder(res, ESTADO_ERROR_EDICION[error.codigo], { mensaje: error.message });
+    return;
+  }
+  responder(res, 500, { mensaje: "No se ha podido actualizar el evento" });
+}
 
 function idDeUsuarioEnRuta(req: IncomingMessage): string | undefined {
   const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
