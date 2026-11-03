@@ -63,10 +63,14 @@ async function conServidor(store: SqliteEventStore, prueba: (base: string) => Pr
   }
 }
 
-function patch(base: string, cuerpo: unknown, id = "evt_edicion"): Promise<Response> {
+const ORGANIZADOR = "usr_mock_001";
+
+function patch(base: string, cuerpo: unknown, id = "evt_edicion", usuarioId: string | null = ORGANIZADOR): Promise<Response> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (usuarioId !== null) headers["X-User-Id"] = usuarioId;
   return fetch(`${base}/api/v1/events/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: typeof cuerpo === "string" ? cuerpo : JSON.stringify(cuerpo),
   });
 }
@@ -237,11 +241,60 @@ test("la reducción de aforo ve las plazas que otra conexión acaba de confirmar
 
   assert.equal(participante.reservar("evt_edicion", "usr_mock_200").reserva.estado, "confirmada");
   assert.throws(
-    () => organizador.actualizarEvento("evt_edicion", { aforoMaximo: 2 }),
+    () => organizador.actualizarEvento("evt_edicion", { aforoMaximo: 2 }, ORGANIZADOR),
     /La capacidad no puede ser menor al número de usuarios ya inscritos \(3\)/,
   );
 
   const guardado = organizador.obtenerEvento("evt_edicion")!;
   assert.equal(guardado.aforoMaximo, 5);
   assert.equal(guardado.plazasDisponibles, 2);
+});
+
+// G3P-57: control de permisos de organizador
+
+test("sin cabecera X-User-Id la edición responde 401 y no toca la base", async () => {
+  const store = almacenConInscritos(0);
+  await conServidor(store, async (base) => {
+    const respuesta = await patch(base, { titulo: "Intruso" }, "evt_edicion", null);
+    assert.equal(respuesta.status, 401);
+    assert.deepEqual(await respuesta.json(), { mensaje: "Falta la cabecera X-User-Id" });
+  });
+  assert.equal(store.obtenerEvento("evt_edicion")!.titulo, "Yoga al aire libre");
+});
+
+test("un usuario que no es el organizador recibe 403 y el evento no cambia", async () => {
+  const store = almacenConInscritos(2);
+  await conServidor(store, async (base) => {
+    const respuesta = await patch(base, { titulo: "Intruso", aforoMaximo: 20 }, "evt_edicion", "usr_mock_101");
+    assert.equal(respuesta.status, 403);
+    assert.deepEqual(await respuesta.json(), { mensaje: "Solo el organizador del evento puede editarlo" });
+  });
+  const guardado = store.obtenerEvento("evt_edicion")!;
+  assert.equal(guardado.titulo, "Yoga al aire libre");
+  assert.equal(guardado.aforoMaximo, 5);
+  assert.equal(guardado.plazasDisponibles, 3);
+});
+
+test("el permiso se comprueba antes que los datos: un no organizador no descubre errores de validación", async () => {
+  const store = almacenConInscritos(0);
+  await conServidor(store, async (base) => {
+    const respuesta = await patch(base, { deporte: "futbol" }, "evt_edicion", "usr_mock_999");
+    assert.equal(respuesta.status, 403);
+  });
+});
+
+test("el organizador sí puede editar su evento", async () => {
+  const store = almacenConInscritos(0);
+  await conServidor(store, async (base) => {
+    const respuesta = await patch(base, { titulo: "Yoga del organizador" }, "evt_edicion", ORGANIZADOR);
+    assert.equal(respuesta.status, 200);
+    assert.equal(((await respuesta.json()) as Evento).titulo, "Yoga del organizador");
+  });
+});
+
+test("el almacén también rechaza al no organizador fuera de HTTP", () => {
+  const store = almacenConInscritos(0);
+  assert.throws(() => store.actualizarEvento("evt_edicion", { titulo: "x" }, "usr_mock_002"), /Solo el organizador/);
+  assert.throws(() => store.actualizarEvento("evt_edicion", { titulo: "x" }, "  "), /Falta la cabecera X-User-Id/);
+  assert.equal(store.obtenerEvento("evt_edicion")!.titulo, "Yoga al aire libre");
 });

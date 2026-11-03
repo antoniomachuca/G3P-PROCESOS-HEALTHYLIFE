@@ -4,7 +4,7 @@ import type { EventStore, ResultadoCancelacion, ResultadoReserva } from "../doma
 import { fechaIsoConOffset } from "../domain/fecha.ts";
 import { assertEvento, assertReserva, type Evento, type Reserva } from "../domain/modelo.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
-import { ErrorDeEdicion, validarCambiosEvento } from "../domain/edicion-evento.ts";
+import { asegurarOrganizador, ErrorDeEdicion, validarCambiosEvento } from "../domain/edicion-evento.ts";
 
 type EventoRow = {
   id: string;
@@ -185,7 +185,7 @@ export class SqliteEventStore implements EventStore {
   }
 
 
-  actualizarEvento(id: string, cuerpo: unknown, ahora: Date = new Date()): Evento {
+  actualizarEvento(id: string, cuerpo: unknown, usuarioId: string, ahora: Date = new Date()): Evento {
     // BEGIN IMMEDIATE: ninguna reserva puede colarse entre la comprobación del aforo y la escritura.
     this.db.exec("BEGIN IMMEDIATE");
     try {
@@ -193,6 +193,7 @@ export class SqliteEventStore implements EventStore {
       if (!actual) {
         throw new ErrorDeEdicion("no_encontrado", "Evento no encontrado");
       }
+      asegurarOrganizador(actual, usuarioId);
       const cambios = validarCambiosEvento(cuerpo, actual, ahora);
       const capacidad = cambios.aforoMaximo ?? actual.aforoMaximo;
 

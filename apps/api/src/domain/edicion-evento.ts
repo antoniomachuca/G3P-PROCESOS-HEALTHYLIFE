@@ -2,7 +2,14 @@ import { NIVELES, type Evento, type Nivel } from "./modelo.ts";
 
 // HU-08 / G3P-56: qué puede cambiar el organizador de un evento y con qué reglas.
 
-export type CodigoErrorEdicion = "no_encontrado" | "datos_invalidos" | "campo_bloqueado" | "aforo_insuficiente" | "fecha_pasada";
+export type CodigoErrorEdicion =
+  | "no_encontrado"
+  | "sin_usuario"
+  | "no_organizador"
+  | "datos_invalidos"
+  | "campo_bloqueado"
+  | "aforo_insuficiente"
+  | "fecha_pasada";
 
 export class ErrorDeEdicion extends Error {
   readonly codigo: CodigoErrorEdicion;
@@ -46,6 +53,19 @@ function fecha(valor: unknown, campo: string): string {
     throw new ErrorDeEdicion("datos_invalidos", `El campo ${campo} debe ser una fecha ISO-8601 con zona horaria`);
   }
   return valor;
+}
+
+/**
+ * G3P-57: solo el organizador del evento puede editarlo. El usuario llega en X-User-Id
+ * (sustituto temporal hasta que E1 publique su mecanismo de identidad).
+ */
+export function asegurarOrganizador(evento: Pick<Evento, "organizadorId">, usuarioId: string): void {
+  if (usuarioId.trim().length === 0) {
+    throw new ErrorDeEdicion("sin_usuario", "Falta la cabecera X-User-Id");
+  }
+  if (evento.organizadorId !== usuarioId) {
+    throw new ErrorDeEdicion("no_organizador", "Solo el organizador del evento puede editarlo");
+  }
 }
 
 /** Plazas que ya están cogidas: lo que la capacidad nunca puede quedar por debajo. */
