@@ -67,3 +67,26 @@ test("rutas y métodos no soportados", async () => {
     assert.equal((await fetch(`${base}/api/v1/events`, { method: "POST" })).status, 405);
   });
 });
+
+test("HU-03 / G3P-14: GET /api/v1/events?deporte= filtra por modalidad y rechaza deportes no válidos", async () => {
+  const store = {
+    listarEventos: (): Evento[] => [
+      { ...evento("evt_padel", "2026-10-15T10:00:00+02:00", "2026-10-15T11:00:00+02:00"), deporte: "padel" },
+      { ...evento("evt_yoga", "2026-10-16T10:00:00+02:00", "2026-10-16T11:00:00+02:00"), deporte: "yoga" },
+    ],
+  };
+  await conServidor(store, async (base) => {
+    const resPadel = await fetch(`${base}/api/v1/events?deporte=padel`);
+    assert.equal(resPadel.status, 200);
+    const cuerpoPadel = (await resPadel.json()) as { eventos: Evento[] };
+    assert.deepEqual(cuerpoPadel.eventos.map((e) => e.id), ["evt_padel"]);
+
+    const resVacio = await fetch(`${base}/api/v1/events?deporte=natacion`);
+    assert.equal(resVacio.status, 200);
+    const cuerpoVacio = (await resVacio.json()) as { eventos: Evento[] };
+    assert.deepEqual(cuerpoVacio.eventos, []);
+
+    const resInvalido = await fetch(`${base}/api/v1/events?deporte=baloncesto`);
+    assert.equal(resInvalido.status, 400);
+  });
+});
