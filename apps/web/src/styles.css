@@ -72,9 +72,11 @@ h1, h2, h3, p { margin-top: 0; }
 .controles { display: grid; gap: 18px; padding: 22px 0 26px; border-bottom: 1px solid var(--border); }
 .busqueda input { width: 100%; height: 44px; padding: 0 14px; background: var(--urjc-white); border: 1px solid var(--border); border-radius: 4px; color: var(--urjc-black); }
 .busqueda input::placeholder { color: #777; }
-.filtros-deporte { display: flex; gap: 8px; overflow-x: auto; padding: 2px 1px 5px; }
-.filtro { min-height: 34px; flex: 0 0 auto; padding: 0 13px; border: 1px solid var(--border); border-radius: 4px; background: var(--urjc-white); color: #333; font-size: 13px; }
-.filtro--activo { border-color: var(--urjc-red); background: var(--urjc-red); color: var(--urjc-white); }
+.filtros-deporte { display: flex; flex-wrap: wrap; gap: 8px; overflow-x: auto; padding: 2px 1px 5px; }
+.catalogo .filtros-deporte { margin-bottom: 1.5rem; }
+.filtro { min-height: 36px; flex: 0 0 auto; padding: 0 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--urjc-white); color: var(--urjc-black); font-family: var(--fuente); font-size: 13px; font-weight: 600; transition: background 150ms ease, border-color 150ms ease, color 150ms ease; }
+.filtro:hover:not(.filtro--activo) { border-color: var(--urjc-red); color: var(--urjc-red); }
+.filtro--activo { border-color: var(--urjc-red); background: var(--urjc-red); color: var(--urjc-white); font-weight: 700; }
 
 .seccion-catalogo { padding: 31px 0 52px; }
 .seccion-cabecera { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }

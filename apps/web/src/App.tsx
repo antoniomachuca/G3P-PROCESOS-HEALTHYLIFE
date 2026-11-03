@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { ApiError, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
+import {
+  DEPORTES_FILTRO,
+  MENSAJE_SIN_EVENTOS_CATEGORIA,
+  NOMBRE_DEPORTE,
+  alternarFiltroDeporte,
+  filtrarEventosCatalogo,
+} from "./formato";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
 import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
@@ -8,19 +15,11 @@ import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
 
 
 const USUARIO_DEMO = import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010";
-const NOMBRE_DEPORTE: Record<Deporte, string> = {
-  futbol: "Fútbol",
-  running: "Running",
-  padel: "Pádel",
-  natacion: "Natación",
-  yoga: "Yoga",
-  ciclismo: "Ciclismo",
-};
 const IMAGEN_DEMO: Partial<Record<Deporte, string>> = {
   padel: "/img/eventos/padel-demo.jpg",
   running: "/img/eventos/running-demo.jpg",
 };
-const DEPORTES: Array<Deporte | "todos"> = ["todos", "padel", "running", "futbol", "natacion", "yoga", "ciclismo"];
+const DEPORTES = DEPORTES_FILTRO;
 
 type Aviso = { tipo: "exito" | "error"; texto: string };
 
@@ -143,9 +142,9 @@ function App() {
     }
   }
 
-  const eventosFiltrados = eventos.filter((evento) => {
-    const texto = `${evento.titulo} ${evento.lugar.nombre} ${evento.lugar.municipio} ${evento.deporte}`.toLowerCase();
-    return texto.includes(consulta.toLowerCase().trim()) && (deporteActivo === "todos" || evento.deporte === deporteActivo);
+  const eventosFiltrados = filtrarEventosCatalogo(eventos, {
+    deporte: deporteActivo,
+    consulta,
   });
   const plazasTotales = eventos.reduce((suma, evento) => suma + evento.plazasDisponibles, 0);
 
@@ -278,14 +277,14 @@ function App() {
               <span className="sr-only">Buscar actividad, instalación o campus</span>
               <input value={consulta} onChange={(evento) => setConsulta(evento.target.value)} placeholder="Buscar actividad, instalación o campus" />
             </label>
-            <div className="filtros-deporte" aria-label="Filtrar por deporte">
+            <div className="filtros-deporte" role="group" aria-label="Filtrar por deporte">
               {DEPORTES.map((deporte) => (
                 <button
                   key={deporte}
                   className={deporteActivo === deporte ? "filtro filtro--activo" : "filtro"}
                   type="button"
                   aria-pressed={deporteActivo === deporte}
-                  onClick={() => setDeporteActivo(deporte)}
+                  onClick={() => setDeporteActivo((actual) => alternarFiltroDeporte(actual, deporte))}
                 >
                   {deporte === "todos" ? "Todos" : NOMBRE_DEPORTE[deporte]}
                 </button>
@@ -321,7 +320,21 @@ function App() {
                 ))}
               </div>
             ) : (
-              <div className="estado-pagina">No hay actividades que coincidan con la búsqueda.</div>
+              <div className="estado-pagina" role="status">
+                <p>{MENSAJE_SIN_EVENTOS_CATEGORIA}</p>
+                {(deporteActivo !== "todos" || consulta.trim() !== "") && (
+                  <button
+                    className="boton boton--secundario"
+                    type="button"
+                    onClick={() => {
+                      setDeporteActivo("todos");
+                      setConsulta("");
+                    }}
+                  >
+                    Ver todos los deportes
+                  </button>
+                )}
+              </div>
             )}
           </section>
           <footer className="pie">Universidad Rey Juan Carlos · Healthy Life</footer>
