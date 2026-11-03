@@ -1,3 +1,4 @@
+import type { CuerpoActualizacion } from "./edicion";
 import type { EstadoReserva, Evento, ResultadoReserva } from "./tipos";
 
 export class ApiError extends Error {
@@ -30,6 +31,23 @@ export async function cargarEvento(eventoId: string): Promise<Evento> {
     );
   }
   return (await respuesta.json()) as Evento;
+}
+
+/** HU-08 / G3P-58: guarda los cambios de un evento (PATCH /api/v1/events/{id}). Solo puede hacerlo su organizador. */
+export async function actualizarEvento(eventoId: string, cuerpo: CuerpoActualizacion, usuarioId: string): Promise<Evento> {
+  const respuesta = await fetch(`/api/v1/events/${encodeURIComponent(eventoId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "X-User-Id": usuarioId },
+    body: JSON.stringify(cuerpo),
+  });
+  const datos = (await respuesta.json().catch(() => ({}))) as Evento | { mensaje?: string };
+  if (!respuesta.ok) {
+    throw new ApiError(
+      respuesta.status,
+      "mensaje" in datos && datos.mensaje ? datos.mensaje : "No se han podido guardar los cambios.",
+    );
+  }
+  return datos as Evento;
 }
 
 export async function reservarPlaza(eventoId: string, usuarioId: string): Promise<ResultadoReserva> {

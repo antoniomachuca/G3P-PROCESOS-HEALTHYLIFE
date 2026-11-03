@@ -393,3 +393,12 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 .campo--solo-lectura .campo__etiqueta::after { content: " · solo lectura"; color: var(--muted); font-weight: 400; text-transform: none; }
 .formulario-edicion__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
 .ficha-titulo__acciones { margin-top: 16px; }
+
+/* G3P-58: rechazo del guardado dentro del formulario de edición */
+.formulario-edicion__error {
+  padding: 12px 14px;
+  border-left: 4px solid var(--urjc-red);
+  background: var(--urjc-white);
+  color: var(--urjc-black);
+  font-size: 14px;
+}

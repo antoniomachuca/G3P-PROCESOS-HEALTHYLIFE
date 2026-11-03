@@ -84,8 +84,15 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
   }
 
   // HU-08 / G3P-56: PATCH /api/v1/events/{id} con los campos editables del evento.
+  // G3P-57: solo el organizador (X-User-Id igual a organizadorId) puede editarlo.
   if (eventoEnRuta && req.method === "PATCH") {
     const eventoId = decodeURIComponent(eventoEnRuta[1]);
+    const usuarioId = cabecera(req, "x-user-id");
+    if (!usuarioId) {
+      req.resume();
+      responder(res, 401, { mensaje: "Falta la cabecera X-User-Id" });
+      return;
+    }
     let body = "";
     req.on("data", (chunk) => { body += chunk; });
     req.on("end", () => {
@@ -97,7 +104,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
         return;
       }
       try {
-        responder(res, 200, store.actualizarEvento(eventoId, cuerpo));
+        responder(res, 200, store.actualizarEvento(eventoId, cuerpo, usuarioId));
       } catch (error) {
         manejarErrorEdicion(res, error);
       }
@@ -218,6 +225,8 @@ function manejarErrorReserva(res: ServerResponse, error: unknown, fallbackMensaj
 
 const ESTADO_ERROR_EDICION: Record<ErrorDeEdicion["codigo"], number> = {
   no_encontrado: 404,
+  sin_usuario: 401,
+  no_organizador: 403,
   datos_invalidos: 400,
   campo_bloqueado: 400,
   fecha_pasada: 400,
