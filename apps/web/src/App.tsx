@@ -4,6 +4,7 @@ import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
 import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
+import { PanelMisActividades } from "./components/PanelMisActividades";
 
 
 
@@ -45,6 +46,7 @@ function App() {
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
   const [creandoEvento, setCreandoEvento] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [viendoMisActividades, setViendoMisActividades] = useState(false);
   const [reservandoId, setReservandoId] = useState("");
   const [reservas, setReservas] = useState<Record<string, EstadoReserva>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -152,16 +154,19 @@ function App() {
   return (
     <div className="app-shell">
       <header className="barra-superior">
-        <a className="marca" href="#catalogo" onClick={() => setEventoSeleccionado(null)} aria-label="URJC Healthy Life, catálogo">
+        <a className="marca" href="#catalogo" onClick={() => { setEventoSeleccionado(null); setViendoMisActividades(false); }} aria-label="URJC Healthy Life, catálogo">
           <span className="marca__siglas">URJC</span>
           <span className="marca__separador" />
           <span className="marca__nombre">Healthy Life</span>
         </a>
         <nav className="navegacion" aria-label="Navegación principal">
-          <a className={!eventoSeleccionado && !creandoEvento ? "navegacion__activo" : ""} href="#catalogo" onClick={() => { setEventoSeleccionado(null); setCreandoEvento(false); setEditandoId(null); }}>
+          <a className={!eventoSeleccionado && !creandoEvento && !viendoMisActividades ? "navegacion__activo" : ""} href="#catalogo" onClick={() => { setEventoSeleccionado(null); setCreandoEvento(false); setEditandoId(null); setViendoMisActividades(false); }}>
             Actividades
           </a>
-          <button className="boton boton--primario" style={{ minHeight: '34px', padding: '6px 12px', fontSize: '13px' }} onClick={() => { setEventoSeleccionado(null); setEditandoId(null); setCreandoEvento(true); }}>
+          <a className={!eventoSeleccionado && !creandoEvento && viendoMisActividades ? "navegacion__activo" : ""} href="#mis-actividades" onClick={() => { setEventoSeleccionado(null); setCreandoEvento(false); setEditandoId(null); setViendoMisActividades(true); }}>
+            Mis actividades
+          </a>
+          <button className="boton boton--primario" style={{ minHeight: '34px', padding: '6px 12px', fontSize: '13px' }} onClick={() => { setEventoSeleccionado(null); setEditandoId(null); setViendoMisActividades(false); setCreandoEvento(true); }}>
             Publicar actividad
           </button>
         </nav>
@@ -189,7 +194,7 @@ function App() {
       ) : eventoSeleccionado ? (
         <main className="contenido contenido--ficha">
           <button className="enlace-volver" type="button" onClick={() => setEventoSeleccionado(null)}>
-            Volver al catálogo
+            {viendoMisActividades ? "Volver a mis actividades" : "Volver al catálogo"}
           </button>
           <div className="ficha-cabecera">
             <div className="ficha-foto-wrap">
@@ -259,6 +264,12 @@ function App() {
 
           </div>
         </main>
+      ) : viendoMisActividades ? (
+        <PanelMisActividades
+          usuarioId={USUARIO_DEMO}
+          onAbrir={setEventoSeleccionado}
+          onExplorarCatalogo={() => setViendoMisActividades(false)}
+        />
       ) : (
         <main id="catalogo" className="contenido">
           <section className="presentacion">

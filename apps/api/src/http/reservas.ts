@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { EventStore } from "../domain/event-store.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
 import { ErrorDeEdicion } from "../domain/edicion-evento.ts";
-import { eventosActivos } from "../domain/catalogo.ts";
+import { actividadesProximas, eventosActivos } from "../domain/catalogo.ts";
 import { manejarEventosUsuario } from "./eventos-usuario.ts";
 
 const ORIGEN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
@@ -25,6 +25,17 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
   if (req.method === "GET" && (ruta === "/api/v1/events" || ruta === "/events")) {
     const eventos = eventosActivos(store.listarEventos());
     responder(res, 200, { eventos });
+    return;
+  }
+
+  // HU-17 / G3P-52: mis actividades futuras con reserva confirmada. El usuario llega en X-User-Id (§5 de AGENTS.md).
+  if (req.method === "GET" && (ruta === "/api/v1/me/events" || ruta === "/me/events")) {
+    const usuarioId = cabecera(req, "x-user-id");
+    if (!usuarioId) {
+      responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
+      return;
+    }
+    responder(res, 200, { eventos: actividadesProximas(store.listarEventosPorUsuario(usuarioId)) });
     return;
   }
 

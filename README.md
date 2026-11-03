@@ -98,6 +98,12 @@ HU-08 (G3P-56): `PATCH /api/v1/events/{id}` actualiza los campos editables de un
 curl -X PATCH http://127.0.0.1:3001/api/v1/events/evt_001 -H 'Content-Type: application/json' -d '{"aforoMaximo": 10, "lugar": {"puntoEncuentro": "Puerta norte"}}'
 ```
 
+HU-17 (G3P-28): `GET /api/v1/me/events` devuelve `{ "eventos": [...] }` con las actividades en las que el usuario tiene reserva `confirmada` y cuyo `fin` aún no ha pasado, ordenadas por `inicio`, con la misma forma que el catálogo (incluye `lugar.puntoEncuentro`). El usuario llega en la cabecera `X-User-Id` (sin ella responde `400`). Las reservas en lista de espera o canceladas y las actividades ya terminadas no salen; el histórico es HU-21 (G3P-46). La web lo muestra en **Mis actividades**, con estado vacío que enlaza al catálogo y tarjetas que abren la ficha.
+
+```bash
+curl http://127.0.0.1:3001/api/v1/me/events -H 'X-User-Id: usr_mock_010'
+```
+
 G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
 
 
