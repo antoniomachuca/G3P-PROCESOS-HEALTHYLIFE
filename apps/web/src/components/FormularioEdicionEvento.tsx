@@ -1,8 +1,16 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError, cargarEvento } from "../api";
-import { cambiosDesdeFormulario, valoresFormularioEdicion, type CambiosEvento } from "../edicion";
+import {
+  cambiosDesdeFormulario,
+  cuerpoActualizacion,
+  errorDeGuardado,
+  valoresFormularioEdicion,
+  type CuerpoActualizacion,
+  type ErrorGuardado,
+} from "../edicion";
 import { NOMBRE_DEPORTE } from "../formato";
 import type { Evento, Nivel } from "../tipos";
+import { ModalConflictoAforo } from "./ModalConflictoAforo";
 
 const NIVELES: Array<{ valor: Nivel; texto: string }> = [
   { valor: "iniciacion", texto: "Iniciación" },
@@ -12,7 +20,8 @@ const NIVELES: Array<{ valor: Nivel; texto: string }> = [
 
 type Props = {
   eventoId: string;
-  onGuardar: (eventoId: string, cambios: CambiosEvento) => void | Promise<void>;
+  /** Envía los cambios. Si la API los rechaza debe lanzar el error para que el formulario lo muestre. */
+  onGuardar: (eventoId: string, cuerpo: CuerpoActualizacion) => void | Promise<void>;
   onCancelar: () => void;
 };
 
@@ -54,7 +63,7 @@ export function FormularioEdicionEvento({ eventoId, onGuardar, onCancelar }: Pro
           Cargando datos de la actividad...
         </div>
       ) : (
-        <CamposEdicionEvento evento={evento} onGuardar={(cambios) => onGuardar(evento.id, cambios)} onCancelar={onCancelar} />
+        <CamposEdicionEvento evento={evento} onGuardar={(cuerpo) => onGuardar(evento.id, cuerpo)} onCancelar={onCancelar} />
       )}
     </main>
   );
@@ -62,13 +71,23 @@ export function FormularioEdicionEvento({ eventoId, onGuardar, onCancelar }: Pro
 
 type PropsCampos = {
   evento: Evento;
-  onGuardar: (cambios: CambiosEvento) => void | Promise<void>;
+  onGuardar: (cuerpo: CuerpoActualizacion) => void | Promise<void>;
   onCancelar: () => void;
+  /** Error inicial, solo para pruebas de render. */
+  errorInicial?: ErrorGuardado | null;
 };
 
-export function CamposEdicionEvento({ evento, onGuardar, onCancelar }: PropsCampos) {
+export function CamposEdicionEvento({ evento, onGuardar, onCancelar, errorInicial = null }: PropsCampos) {
   const inicial = valoresFormularioEdicion(evento);
   const [guardando, setGuardando] = useState(false);
+  const [errorGuardado, setErrorGuardado] = useState<ErrorGuardado | null>(errorInicial);
+  const campoAforo = useRef<HTMLInputElement>(null);
+
+  const cerrarModalAforo = useCallback(() => {
+    setErrorGuardado(null);
+    campoAforo.current?.focus();
+    campoAforo.current?.select();
+  }, []);
 
   async function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,8 +106,12 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar }: PropsCamp
       aforoMaximo: Number.parseInt(texto("aforoMaximo"), 10),
     });
     setGuardando(true);
+    setErrorGuardado(null);
     try {
-      await onGuardar(cambios);
+      await onGuardar(cuerpoActualizacion(cambios, evento));
+    } catch (error) {
+      // Lo escrito se conserva: el formulario no se recarga al fallar.
+      setErrorGuardado(errorDeGuardado(error));
     } finally {
       setGuardando(false);
     }
@@ -162,6 +185,7 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar }: PropsCamp
           <label className="campo">
             <span className="campo__etiqueta">Capacidad total *</span>
             <input
+              ref={campoAforo}
               required
               name="aforoMaximo"
               type="number"
@@ -176,6 +200,12 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar }: PropsCamp
           </label>
         </fieldset>
 
+        {errorGuardado?.tipo === "general" && (
+          <div className="formulario-edicion__error" role="alert">
+            {errorGuardado.mensaje}
+          </div>
+        )}
+
         <div className="formulario-edicion__acciones">
           <button type="submit" className="boton boton--primario" disabled={guardando}>
             {guardando ? "Guardando..." : "Guardar cambios"}
@@ -185,6 +215,12 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar }: PropsCamp
           </button>
         </div>
       </form>
+
+      <ModalConflictoAforo
+        abierto={errorGuardado?.tipo === "aforo"}
+        mensaje={errorGuardado?.mensaje ?? ""}
+        onCerrar={cerrarModalAforo}
+      />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
+import { ApiError, actualizarEvento, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento } from "./tipos";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
@@ -171,9 +171,17 @@ function App() {
       {editandoId ? (
         <FormularioEdicionEvento
           eventoId={editandoId}
-          onGuardar={() => {
-            // El envío a la API llega con el endpoint de actualización (G3P-56).
-            setAviso({ tipo: "error", texto: "El guardado de cambios aún no está disponible." });
+          onGuardar={async (eventoId, cuerpo) => {
+            // Si la API rechaza el cambio, el error sube al formulario, que muestra el modal o la alerta.
+            const actualizado = await actualizarEvento(eventoId, cuerpo, USUARIO_DEMO);
+            setEventos((actuales) =>
+              actuales
+                .map((actual) => (actual.id === actualizado.id ? actualizado : actual))
+                .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime()),
+            );
+            setEventoSeleccionado((actual) => (actual?.id === actualizado.id ? actualizado : actual));
+            setEditandoId(null);
+            setAviso({ tipo: "exito", texto: `Cambios guardados en «${actualizado.titulo}».` });
           }}
           onCancelar={() => setEditandoId(null)}
         />
