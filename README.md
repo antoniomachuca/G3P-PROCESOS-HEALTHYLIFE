@@ -94,8 +94,10 @@ HU-08 (G3P-55): `GET /api/v1/events/{id}` devuelve un evento de SQLite con la mi
 
 HU-08 (G3P-56): `PATCH /api/v1/events/{id}` actualiza los campos editables de un evento: `titulo`, `descripcion`, `inicio`, `fin`, `nivel`, `lugar.puntoEncuentro`, `material` y `aforoMaximo`. Solo se envían los que cambian, con las mismas claves del contrato, y responde `200` con el evento actualizado. Si la capacidad nueva es menor que las plazas ya ocupadas responde `409` («La capacidad no puede ser menor al número de usuarios ya inscritos»). Un `inicio` que no sea futuro, un `fin` anterior al inicio o un campo bloqueado (`deporte`, el resto de `lugar`, `plazasDisponibles`, `estado`, `organizadorId`…) responden `400`. Las plazas libres se recalculan en la misma transacción: `plazasDisponibles = aforoMaximo - ocupadas`.
 
+HU-08 (G3P-57): solo el organizador del evento puede editarlo. El usuario llega en la cabecera `X-User-Id` (sustituto temporal hasta que E1 fije su mecanismo) y debe coincidir con `organizadorId`. Sin cabecera responde `401` («Falta la cabecera X-User-Id»); con otro usuario responde `403` («Solo el organizador del evento puede editarlo») y el evento no cambia. El permiso se comprueba antes que los datos del cuerpo.
+
 ```bash
-curl -X PATCH http://127.0.0.1:3001/api/v1/events/evt_001 -H 'Content-Type: application/json' -d '{"aforoMaximo": 10, "lugar": {"puntoEncuentro": "Puerta norte"}}'
+curl -X PATCH http://127.0.0.1:3001/api/v1/events/evt_001 -H 'Content-Type: application/json' -H 'X-User-Id: usr_mock_001' -d '{"aforoMaximo": 10, "lugar": {"puntoEncuentro": "Puerta norte"}}'
 ```
 
 G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
