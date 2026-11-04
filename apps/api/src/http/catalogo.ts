@@ -1,12 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { eventosActivos } from "../domain/catalogo.ts";
+import { esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "../domain/catalogo.ts";
 import type { Evento } from "../domain/modelo.ts";
 
 export type LectorEventos = { listarEventos(): Evento[] };
 
 const ORIGEN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
-/** GET /api/v1/events → { eventos: [...] } solo con el catálogo activo. */
+/** GET /api/v1/events → { eventos: [...] } solo con el catálogo activo (admite ?deporte=, ?nivel=, ?campus=). */
 export function manejarCatalogo(
   store: LectorEventos,
   req: IncomingMessage,
@@ -20,8 +20,8 @@ export function manejarCatalogo(
     return;
   }
 
-  const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
-  if (ruta !== "/api/v1/events") {
+  const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  if (url.pathname !== "/api/v1/events") {
     responder(res, 404, { mensaje: "Ruta no encontrada" });
     return;
   }
@@ -30,8 +30,24 @@ export function manejarCatalogo(
     return;
   }
 
+  const deporte = url.searchParams.get("deporte")?.trim().toLowerCase() ?? "";
+  if (deporte && deporte !== "todos" && !esDeporteValido(deporte)) {
+    responder(res, 400, { mensaje: "Modalidad deportiva no válida" });
+    return;
+  }
+
+  const nivel = url.searchParams.get("nivel")?.trim().toLowerCase() ?? "";
+  if (nivel && nivel !== "todos" && !esNivelValido(nivel)) {
+    responder(res, 400, { mensaje: "Nivel no válido" });
+    return;
+  }
+
+  const campus = url.searchParams.get("campus")?.trim() ?? "";
+
   try {
-    responder(res, 200, { eventos: eventosActivos(store.listarEventos(), ahora) });
+    const activos = eventosActivos(store.listarEventos(), ahora);
+    const eventos = filtrarCatalogo(activos, { deporte, nivel, campus });
+    responder(res, 200, { eventos });
   } catch {
     responder(res, 500, { mensaje: "No se ha podido cargar el catálogo de eventos" });
   }

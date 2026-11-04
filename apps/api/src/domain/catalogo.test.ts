@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { eventosActivos } from "./catalogo.ts";
+import { esDeporteValido, eventosActivos, filtrarCatalogo } from "./catalogo.ts";
 import { DEPORTES, type CatalogoEventos, type Evento } from "./modelo.ts";
 
 const semilla = JSON.parse(
@@ -61,4 +61,36 @@ test("la semilla oculta finalizados, cancelados y pasados, y deja el resto en or
   const inicios = activos.map((e) => new Date(e.inicio).getTime());
   assert.deepEqual(inicios, [...inicios].sort((a, b) => a - b));
   assert.ok(activos.length < semilla.eventos.length);
+});
+
+test("HU-03 / G3P-14: filtrarCatalogo devuelve solo eventos de la modalidad seleccionada", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  const padel = filtrarCatalogo(activos, { deporte: "padel" });
+  assert.ok(padel.length > 0);
+  assert.ok(padel.every((e) => e.deporte === "padel"));
+});
+
+test("HU-03 / G3P-14: filtrarCatalogo con 'todos' o sin filtro devuelve todos los eventos", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  assert.equal(filtrarCatalogo(activos, { deporte: "todos" }).length, activos.length);
+  assert.equal(filtrarCatalogo(activos, {}).length, activos.length);
+});
+
+test("HU-03 / G3P-14: filtrarCatalogo opera de forma combinada con nivel y campus", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  const combinados = filtrarCatalogo(activos, {
+    deporte: "padel",
+    nivel: "iniciacion",
+    campus: "Alcorcón",
+  });
+  assert.equal(combinados.length, 1);
+  assert.equal(combinados[0].id, "evt_001");
+});
+
+test("HU-03 / G3P-14: esDeporteValido reconoce las 6 modalidades oficiales y rechaza otras", () => {
+  for (const d of ["futbol", "running", "padel", "natacion", "yoga", "ciclismo"]) {
+    assert.equal(esDeporteValido(d), true);
+  }
+  assert.equal(esDeporteValido("baloncesto"), false);
+  assert.equal(esDeporteValido("tenis"), false);
 });
