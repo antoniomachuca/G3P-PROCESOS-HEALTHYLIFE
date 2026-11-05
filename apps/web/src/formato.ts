@@ -19,7 +19,22 @@ export const DEPORTES_FILTRO: ReadonlyArray<Deporte | 'todos'> = [
   'ciclismo',
 ];
 
+export const NOMBRE_NIVEL: Record<Nivel, string> = {
+  iniciacion: 'Iniciación',
+  intermedio: 'Intermedio',
+  competicion: 'Competición',
+};
+
+export const NIVELES_FILTRO: ReadonlyArray<Nivel | 'todos'> = [
+  'todos',
+  'iniciacion',
+  'intermedio',
+  'competicion',
+];
+
 export const MENSAJE_SIN_EVENTOS_CATEGORIA = 'No hay eventos disponibles en esta categoría actualmente';
+export const MENSAJE_SIN_EVENTOS_NIVEL =
+  'No hay actividades disponibles para este nivel de exigencia actualmente. Te sugerimos restablecer los filtros.';
 
 export type FiltrosCatalogo = {
   deporte?: Deporte | 'todos';
@@ -33,6 +48,15 @@ export type FiltrosCatalogo = {
  * activa al volver a pulsarla, regresando a 'todos' (Criterio 2 de HU-03 / G3P-14).
  */
 export function alternarFiltroDeporte(actual: Deporte | 'todos', seleccionado: Deporte | 'todos'): Deporte | 'todos' {
+  if (seleccionado === 'todos') return 'todos';
+  return actual === seleccionado ? 'todos' : seleccionado;
+}
+
+/**
+ * alternarFiltroNivel permite seleccionar un nivel o desmarcar el nivel
+ * activo al volver a pulsarlo, regresando a 'todos' (Criterio 2 de HU-04 / G3P-15).
+ */
+export function alternarFiltroNivel(actual: Nivel | 'todos', seleccionado: Nivel | 'todos'): Nivel | 'todos' {
   if (seleccionado === 'todos') return 'todos';
   return actual === seleccionado ? 'todos' : seleccionado;
 }
