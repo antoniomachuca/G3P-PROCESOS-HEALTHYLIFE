@@ -379,7 +379,7 @@ function BotonReserva({
       : estadoReserva === "en_espera"
         ? "En lista de espera"
         : sinPlazas
-          ? "Sin plazas"
+          ? "Aforo completo"
           : "Reservar plaza";
 
   return (
