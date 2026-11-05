@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { esDeporteValido, eventosActivos, filtrarCatalogo } from "./catalogo.ts";
-import { DEPORTES, type CatalogoEventos, type Evento } from "./modelo.ts";
+import { esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "./catalogo.ts";
+import { DEPORTES, NIVELES, type CatalogoEventos, type Evento } from "./modelo.ts";
 
 const semilla = JSON.parse(
   readFileSync(new URL("../../../../data/eventos.json", import.meta.url), "utf8"),
@@ -93,4 +93,23 @@ test("HU-03 / G3P-14: esDeporteValido reconoce las 6 modalidades oficiales y rec
   }
   assert.equal(esDeporteValido("baloncesto"), false);
   assert.equal(esDeporteValido("tenis"), false);
+});
+
+test("HU-04 / G3P-15: filtrarCatalogo devuelve solo eventos del nivel de exigencia seleccionado", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  const iniciacion = filtrarCatalogo(activos, { nivel: "iniciacion" });
+  assert.ok(iniciacion.length > 0);
+  assert.ok(iniciacion.every((e) => e.nivel === "iniciacion"));
+
+  const competicion = filtrarCatalogo(activos, { nivel: "competicion" });
+  assert.ok(competicion.length > 0);
+  assert.ok(competicion.every((e) => e.nivel === "competicion"));
+});
+
+test("HU-04 / G3P-15: esNivelValido reconoce los 3 niveles oficiales de AGENTS.md y rechaza otros", () => {
+  for (const n of ["iniciacion", "intermedio", "competicion"]) {
+    assert.equal(esNivelValido(n), true);
+  }
+  assert.equal(esNivelValido("experto"), false);
+  assert.equal(esNivelValido("principiante"), false);
 });
