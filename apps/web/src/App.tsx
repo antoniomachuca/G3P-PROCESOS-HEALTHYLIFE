@@ -47,6 +47,7 @@ function App() {
   const [reservandoId, setReservandoId] = useState("");
   const [reservas, setReservas] = useState<Record<string, EstadoReserva>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [scrollPrevio, setScrollPrevio] = useState(0);
 
   async function actualizarCatalogo() {
     setCargando(true);
@@ -195,7 +196,7 @@ function App() {
         />
       ) : eventoSeleccionado ? (
         <main className="contenido contenido--ficha">
-          <button className="enlace-volver" type="button" onClick={() => setEventoSeleccionado(null)}>
+          <button className="enlace-volver" type="button" onClick={() => { setEventoSeleccionado(null); requestAnimationFrame(() => window.scrollTo(0, scrollPrevio)); }}>
             Volver al catálogo
           </button>
           <div className="ficha-cabecera">
@@ -321,7 +322,7 @@ function App() {
                     evento={evento}
                     reservando={reservandoId === evento.id}
                     estadoReserva={reservas[evento.id]}
-                    onAbrir={() => setEventoSeleccionado(evento)}
+                    onAbrir={() => { setScrollPrevio(window.scrollY); setEventoSeleccionado(evento); }}
                     onReservar={() => void gestionarReserva(evento)}
                     onConfirmarCancelacion={gestionarCancelacion}
                   />
@@ -379,7 +380,7 @@ function BotonReserva({
       : estadoReserva === "en_espera"
         ? "En lista de espera"
         : sinPlazas
-          ? "Sin plazas"
+          ? "Aforo completo"
           : "Reservar plaza";
 
   return (
