@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { ApiError, actualizarEvento, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
-import type { Deporte, EstadoReserva, Evento } from "./tipos";
+import type { Deporte, EstadoReserva, Evento, Nivel } from "./tipos";
 import {
   DEPORTES_FILTRO,
   MENSAJE_SIN_EVENTOS_CATEGORIA,
+  MENSAJE_SIN_EVENTOS_NIVEL,
+  NIVELES_FILTRO,
   NOMBRE_DEPORTE,
+  NOMBRE_NIVEL,
   alternarFiltroDeporte,
+  alternarFiltroNivel,
   filtrarEventosCatalogo,
 } from "./formato";
 import { FormularioEvento } from "./FormularioEvento";
@@ -41,6 +45,7 @@ function App() {
   const [errorCarga, setErrorCarga] = useState("");
   const [consulta, setConsulta] = useState("");
   const [deporteActivo, setDeporteActivo] = useState<Deporte | "todos">("todos");
+  const [nivelActivo, setNivelActivo] = useState<Nivel | "todos">("todos");
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
   const [creandoEvento, setCreandoEvento] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -145,6 +150,7 @@ function App() {
 
   const eventosFiltrados = filtrarEventosCatalogo(eventos, {
     deporte: deporteActivo,
+    nivel: nivelActivo,
     consulta,
   });
   const plazasTotales = eventos.reduce((suma, evento) => suma + evento.plazasDisponibles, 0);
@@ -286,18 +292,40 @@ function App() {
               <span className="sr-only">Buscar actividad, instalación o campus</span>
               <input value={consulta} onChange={(evento) => setConsulta(evento.target.value)} placeholder="Buscar actividad, instalación o campus" />
             </label>
-            <div className="filtros-deporte" role="group" aria-label="Filtrar por deporte">
-              {DEPORTES.map((deporte) => (
-                <button
-                  key={deporte}
-                  className={deporteActivo === deporte ? "filtro filtro--activo" : "filtro"}
-                  type="button"
-                  aria-pressed={deporteActivo === deporte}
-                  onClick={() => setDeporteActivo((actual) => alternarFiltroDeporte(actual, deporte))}
-                >
-                  {deporte === "todos" ? "Todos" : NOMBRE_DEPORTE[deporte]}
-                </button>
-              ))}
+            <div className="filtros-seccion">
+              <div className="filtros-grupo">
+                <span className="filtros-grupo__etiqueta">Modalidad deportiva:</span>
+                <div className="filtros-deporte" role="group" aria-label="Filtrar por deporte">
+                  {DEPORTES.map((deporte) => (
+                    <button
+                      key={deporte}
+                      className={deporteActivo === deporte ? "filtro filtro--activo" : "filtro"}
+                      type="button"
+                      aria-pressed={deporteActivo === deporte}
+                      onClick={() => setDeporteActivo((actual) => alternarFiltroDeporte(actual, deporte))}
+                    >
+                      {deporte === "todos" ? "Todos los deportes" : NOMBRE_DEPORTE[deporte]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filtros-grupo">
+                <span className="filtros-grupo__etiqueta">Nivel de exigencia física:</span>
+                <div className="filtros-nivel" role="group" aria-label="Filtrar por nivel de exigencia">
+                  {NIVELES_FILTRO.map((nivel) => (
+                    <button
+                      key={nivel}
+                      className={nivelActivo === nivel ? "filtro filtro--activo" : "filtro"}
+                      type="button"
+                      aria-pressed={nivelActivo === nivel}
+                      onClick={() => setNivelActivo((actual) => alternarFiltroNivel(actual, nivel))}
+                    >
+                      {nivel === "todos" ? "Todos los niveles" : NOMBRE_NIVEL[nivel]}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
@@ -330,18 +358,43 @@ function App() {
               </div>
             ) : (
               <div className="estado-pagina" role="status">
-                <p>{MENSAJE_SIN_EVENTOS_CATEGORIA}</p>
-                {(deporteActivo !== "todos" || consulta.trim() !== "") && (
-                  <button
-                    className="boton boton--secundario"
-                    type="button"
-                    onClick={() => {
-                      setDeporteActivo("todos");
-                      setConsulta("");
-                    }}
-                  >
-                    Ver todos los deportes
-                  </button>
+                <p>
+                  {nivelActivo !== "todos"
+                    ? MENSAJE_SIN_EVENTOS_NIVEL
+                    : MENSAJE_SIN_EVENTOS_CATEGORIA}
+                </p>
+                {(deporteActivo !== "todos" || nivelActivo !== "todos" || consulta.trim() !== "") && (
+                  <div className="acciones-estado-vacio">
+                    {nivelActivo !== "todos" && (
+                      <button
+                        className="boton boton--secundario"
+                        type="button"
+                        onClick={() => setNivelActivo("todos")}
+                      >
+                        Ver todos los niveles
+                      </button>
+                    )}
+                    {deporteActivo !== "todos" && (
+                      <button
+                        className="boton boton--secundario"
+                        type="button"
+                        onClick={() => setDeporteActivo("todos")}
+                      >
+                        Ver todos los deportes
+                      </button>
+                    )}
+                    <button
+                      className="boton boton--primario"
+                      type="button"
+                      onClick={() => {
+                        setDeporteActivo("todos");
+                        setNivelActivo("todos");
+                        setConsulta("");
+                      }}
+                    >
+                      Restablecer todos los filtros
+                    </button>
+                  </div>
                 )}
               </div>
             )}
