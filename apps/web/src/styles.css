@@ -398,6 +398,22 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 .formulario-edicion__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
 .ficha-titulo__acciones { margin-top: 16px; }
 
+/* HU-17 (G3P-28): panel Mis actividades */
+.contenido--panel { padding-bottom: 24px; }
+.lista-mis-actividades { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 19px; margin: 28px 0 40px; padding: 0; list-style: none; }
+.mi-actividad { min-width: 0; display: flex; }
+.mi-actividad__boton { width: 100%; display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--border); border-left: 4px solid var(--urjc-red); border-radius: 5px; background: var(--urjc-white); color: var(--urjc-black); text-align: left; cursor: pointer; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.mi-actividad__boton:hover, .mi-actividad__boton:focus-visible { border-color: var(--urjc-black); border-left-color: var(--urjc-red); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.mi-actividad__cabecera { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mi-actividad__estado { color: var(--success); font-size: 12px; font-weight: 700; }
+.mi-actividad__titulo { font-size: 19px; font-weight: 700; line-height: 1.25; }
+.mi-actividad__dato { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); font-size: 14px; }
+.mi-actividad__dato svg { flex: none; margin-top: 2px; }
+.estado-pagina--vacio { min-height: 220px; }
+.estado-pagina--vacio .boton { justify-self: center; text-decoration: none; }
+@media (max-width: 900px) { .lista-mis-actividades { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .lista-mis-actividades { grid-template-columns: 1fr; } }
+
 /* G3P-58: rechazo del guardado dentro del formulario de edición */
 .formulario-edicion__error {
   padding: 12px 14px;

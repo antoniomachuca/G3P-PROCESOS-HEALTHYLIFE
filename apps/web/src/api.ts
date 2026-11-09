@@ -122,3 +122,13 @@ export async function crearEvento(datosEvento: Omit<Evento, "id" | "estado" | "p
   return cuerpo as Evento;
 }
 
+
+/** Mis actividades (HU-17): reservas confirmadas con fin futuro, ordenadas por inicio (GET /api/v1/me/events). */
+export async function cargarMisActividades(usuarioId: string): Promise<Evento[]> {
+  const respuesta = await fetch("/api/v1/me/events", { headers: { "X-User-Id": usuarioId } });
+  if (!respuesta.ok) {
+    throw new ApiError(respuesta.status, "No se han podido cargar tus actividades.");
+  }
+  const datos = (await respuesta.json()) as { eventos: Evento[] };
+  return datos.eventos;
+}

@@ -25,6 +25,15 @@ export function eventosActivos(eventos: Evento[], ahora: Date = new Date()): Eve
 }
 
 /**
+ * Mis actividades (HU-17): de los eventos en los que el usuario tiene reserva confirmada,
+ * deja los abiertos cuyo fin aún no ha pasado, ordenados cronológicamente por inicio.
+ * Los que ya han terminado salen del listado (el histórico es HU-21).
+ */
+export function actividadesProximas(eventosConfirmados: Evento[], ahora: Date = new Date()): Evento[] {
+  return eventosActivos(eventosConfirmados, ahora);
+}
+
+/**
  * Filtra los eventos del catálogo por modalidad deportiva y de forma combinada
  * con otros criterios activos como campus/municipio o nivel requerido (HU-03 / G3P-14).
  */
