@@ -21,7 +21,7 @@ export type ValoresEdicion = {
   plazasOcupadas: number;
 };
 
-/** Cambios que el formulario enviará al endpoint de actualización (G3P-56). */
+/** Valores del formulario ya normalizados, antes de compararlos con el evento guardado. */
 export type CambiosEvento = {
   titulo: string;
   descripcion: string;
@@ -113,4 +113,48 @@ export function cambiosDesdeFormulario(valores: ValoresEdicion): CambiosEvento {
       .filter(Boolean),
     aforoMaximo: valores.aforoMaximo,
   };
+}
+
+/** Cuerpo del PATCH /api/v1/events/{id} con las claves del contrato. Solo lleva lo que cambia. */
+export type CuerpoActualizacion = Partial<Omit<CambiosEvento, "puntoEncuentro">> & {
+  lugar?: { puntoEncuentro: string };
+};
+
+function mismoInstante(a: string, b: string): boolean {
+  return Date.parse(a) === Date.parse(b);
+}
+
+/**
+ * G3P-58: compara el formulario con el evento guardado y devuelve solo los campos modificados.
+ * Así un evento que ya empezó puede corregir el título sin que la API rechace la fecha.
+ */
+export function cuerpoActualizacion(cambios: CambiosEvento, evento: Evento): CuerpoActualizacion {
+  const cuerpo: CuerpoActualizacion = {};
+  if (cambios.titulo !== evento.titulo) cuerpo.titulo = cambios.titulo;
+  if (cambios.descripcion !== evento.descripcion) cuerpo.descripcion = cambios.descripcion;
+  if (!mismoInstante(cambios.inicio, evento.inicio)) cuerpo.inicio = cambios.inicio;
+  if (!mismoInstante(cambios.fin, evento.fin)) cuerpo.fin = cambios.fin;
+  if (cambios.nivel !== evento.nivel) cuerpo.nivel = cambios.nivel;
+  if (cambios.puntoEncuentro !== evento.lugar.puntoEncuentro) cuerpo.lugar = { puntoEncuentro: cambios.puntoEncuentro };
+  if (cambios.material.join("\u0000") !== evento.material.join("\u0000")) cuerpo.material = cambios.material;
+  if (cambios.aforoMaximo !== evento.aforoMaximo) cuerpo.aforoMaximo = cambios.aforoMaximo;
+  return cuerpo;
+}
+
+export type ErrorGuardado = { tipo: "aforo" | "general"; mensaje: string };
+
+/** Traduce el rechazo de la API a lo que enseña el formulario: modal para el conflicto de aforo, alerta para el resto. */
+export function errorDeGuardado(error: unknown): ErrorGuardado {
+  const status = typeof error === "object" && error !== null && "status" in error ? (error as { status: unknown }).status : undefined;
+  const mensaje = error instanceof Error && error.message ? error.message : "";
+  if (status === 409) {
+    return { tipo: "aforo", mensaje: mensaje || "La capacidad no puede ser menor al número de usuarios ya inscritos." };
+  }
+  if (status === 403) {
+    return { tipo: "general", mensaje: "Solo el organizador de la actividad puede editarla." };
+  }
+  if (typeof status === "number") {
+    return { tipo: "general", mensaje: mensaje || "No se han podido guardar los cambios." };
+  }
+  return { tipo: "general", mensaje: "No se ha podido contactar con el servicio de actividades." };
 }

@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { EventStore } from "../domain/event-store.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
 import { ErrorDeEdicion } from "../domain/edicion-evento.ts";
-import { actividadesProximas, eventosActivos } from "../domain/catalogo.ts";
+import { actividadesProximas, esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "../domain/catalogo.ts";
 import { manejarEventosUsuario } from "./eventos-usuario.ts";
 
 const ORIGEN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
@@ -21,9 +21,22 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     return;
   }
 
-  const ruta = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
+  const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  const ruta = url.pathname;
   if (req.method === "GET" && (ruta === "/api/v1/events" || ruta === "/events")) {
-    const eventos = eventosActivos(store.listarEventos());
+    const deporte = url.searchParams.get("deporte")?.trim().toLowerCase() ?? "";
+    if (deporte && deporte !== "todos" && !esDeporteValido(deporte)) {
+      responder(res, 400, { mensaje: "Modalidad deportiva no válida" });
+      return;
+    }
+    const nivel = url.searchParams.get("nivel")?.trim().toLowerCase() ?? "";
+    if (nivel && nivel !== "todos" && !esNivelValido(nivel)) {
+      responder(res, 400, { mensaje: "Nivel no válido" });
+      return;
+    }
+    const campus = url.searchParams.get("campus")?.trim() ?? "";
+    const activos = eventosActivos(store.listarEventos());
+    const eventos = filtrarCatalogo(activos, { deporte, nivel, campus });
     responder(res, 200, { eventos });
     return;
   }
@@ -82,8 +95,15 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
   }
 
   // HU-08 / G3P-56: PATCH /api/v1/events/{id} con los campos editables del evento.
+  // G3P-57: solo el organizador (X-User-Id igual a organizadorId) puede editarlo.
   if (eventoEnRuta && req.method === "PATCH") {
     const eventoId = decodeURIComponent(eventoEnRuta[1]);
+    const usuarioId = cabecera(req, "x-user-id");
+    if (!usuarioId) {
+      req.resume();
+      responder(res, 401, { mensaje: "Falta la cabecera X-User-Id" });
+      return;
+    }
     let body = "";
     req.on("data", (chunk) => { body += chunk; });
     req.on("end", () => {
@@ -95,7 +115,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
         return;
       }
       try {
-        responder(res, 200, store.actualizarEvento(eventoId, cuerpo));
+        responder(res, 200, store.actualizarEvento(eventoId, cuerpo, usuarioId));
       } catch (error) {
         manejarErrorEdicion(res, error);
       }
@@ -216,6 +236,8 @@ function manejarErrorReserva(res: ServerResponse, error: unknown, fallbackMensaj
 
 const ESTADO_ERROR_EDICION: Record<ErrorDeEdicion["codigo"], number> = {
   no_encontrado: 404,
+  sin_usuario: 401,
+  no_organizador: 403,
   datos_invalidos: 400,
   campo_bloqueado: 400,
   fecha_pasada: 400,

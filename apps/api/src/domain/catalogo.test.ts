@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { eventosActivos } from "./catalogo.ts";
-import { DEPORTES, type CatalogoEventos, type Evento } from "./modelo.ts";
+import { esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "./catalogo.ts";
+import { DEPORTES, NIVELES, type CatalogoEventos, type Evento } from "./modelo.ts";
 
 const semilla = JSON.parse(
   readFileSync(new URL("../../../../data/eventos.json", import.meta.url), "utf8"),
@@ -61,4 +61,55 @@ test("la semilla oculta finalizados, cancelados y pasados, y deja el resto en or
   const inicios = activos.map((e) => new Date(e.inicio).getTime());
   assert.deepEqual(inicios, [...inicios].sort((a, b) => a - b));
   assert.ok(activos.length < semilla.eventos.length);
+});
+
+test("HU-03 / G3P-14: filtrarCatalogo devuelve solo eventos de la modalidad seleccionada", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  const padel = filtrarCatalogo(activos, { deporte: "padel" });
+  assert.ok(padel.length > 0);
+  assert.ok(padel.every((e) => e.deporte === "padel"));
+});
+
+test("HU-03 / G3P-14: filtrarCatalogo con 'todos' o sin filtro devuelve todos los eventos", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  assert.equal(filtrarCatalogo(activos, { deporte: "todos" }).length, activos.length);
+  assert.equal(filtrarCatalogo(activos, {}).length, activos.length);
+});
+
+test("HU-03 / G3P-14: filtrarCatalogo opera de forma combinada con nivel y campus", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  const combinados = filtrarCatalogo(activos, {
+    deporte: "padel",
+    nivel: "iniciacion",
+    campus: "Alcorcón",
+  });
+  assert.equal(combinados.length, 1);
+  assert.equal(combinados[0].id, "evt_001");
+});
+
+test("HU-03 / G3P-14: esDeporteValido reconoce las 6 modalidades oficiales y rechaza otras", () => {
+  for (const d of ["futbol", "running", "padel", "natacion", "yoga", "ciclismo"]) {
+    assert.equal(esDeporteValido(d), true);
+  }
+  assert.equal(esDeporteValido("baloncesto"), false);
+  assert.equal(esDeporteValido("tenis"), false);
+});
+
+test("HU-04 / G3P-15: filtrarCatalogo devuelve solo eventos del nivel de exigencia seleccionado", () => {
+  const activos = eventosActivos(semilla.eventos, ahora);
+  const iniciacion = filtrarCatalogo(activos, { nivel: "iniciacion" });
+  assert.ok(iniciacion.length > 0);
+  assert.ok(iniciacion.every((e) => e.nivel === "iniciacion"));
+
+  const competicion = filtrarCatalogo(activos, { nivel: "competicion" });
+  assert.ok(competicion.length > 0);
+  assert.ok(competicion.every((e) => e.nivel === "competicion"));
+});
+
+test("HU-04 / G3P-15: esNivelValido reconoce los 3 niveles oficiales de AGENTS.md y rechaza otros", () => {
+  for (const n of ["iniciacion", "intermedio", "competicion"]) {
+    assert.equal(esNivelValido(n), true);
+  }
+  assert.equal(esNivelValido("experto"), false);
+  assert.equal(esNivelValido("principiante"), false);
 });

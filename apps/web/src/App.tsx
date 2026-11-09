@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
-import { ApiError, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
-import type { Deporte, EstadoReserva, Evento } from "./tipos";
+import { ApiError, actualizarEvento, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
+import type { Deporte, EstadoReserva, Evento, Nivel } from "./tipos";
+import {
+  DEPORTES_FILTRO,
+  MENSAJE_SIN_EVENTOS_CATEGORIA,
+  MENSAJE_SIN_EVENTOS_NIVEL,
+  NIVELES_FILTRO,
+  NOMBRE_DEPORTE,
+  NOMBRE_NIVEL,
+  alternarFiltroDeporte,
+  alternarFiltroNivel,
+  filtrarEventosCatalogo,
+} from "./formato";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
 import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
@@ -9,19 +20,11 @@ import { PanelMisActividades } from "./components/PanelMisActividades";
 
 
 const USUARIO_DEMO = import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010";
-const NOMBRE_DEPORTE: Record<Deporte, string> = {
-  futbol: "Fútbol",
-  running: "Running",
-  padel: "Pádel",
-  natacion: "Natación",
-  yoga: "Yoga",
-  ciclismo: "Ciclismo",
-};
 const IMAGEN_DEMO: Partial<Record<Deporte, string>> = {
   padel: "/img/eventos/padel-demo.jpg",
   running: "/img/eventos/running-demo.jpg",
 };
-const DEPORTES: Array<Deporte | "todos"> = ["todos", "padel", "running", "futbol", "natacion", "yoga", "ciclismo"];
+const DEPORTES = DEPORTES_FILTRO;
 
 type Aviso = { tipo: "exito" | "error"; texto: string };
 
@@ -43,6 +46,7 @@ function App() {
   const [errorCarga, setErrorCarga] = useState("");
   const [consulta, setConsulta] = useState("");
   const [deporteActivo, setDeporteActivo] = useState<Deporte | "todos">("todos");
+  const [nivelActivo, setNivelActivo] = useState<Nivel | "todos">("todos");
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null);
   const [creandoEvento, setCreandoEvento] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -50,6 +54,7 @@ function App() {
   const [reservandoId, setReservandoId] = useState("");
   const [reservas, setReservas] = useState<Record<string, EstadoReserva>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [scrollPrevio, setScrollPrevio] = useState(0);
 
   async function actualizarCatalogo() {
     setCargando(true);
@@ -145,9 +150,10 @@ function App() {
     }
   }
 
-  const eventosFiltrados = eventos.filter((evento) => {
-    const texto = `${evento.titulo} ${evento.lugar.nombre} ${evento.lugar.municipio} ${evento.deporte}`.toLowerCase();
-    return texto.includes(consulta.toLowerCase().trim()) && (deporteActivo === "todos" || evento.deporte === deporteActivo);
+  const eventosFiltrados = filtrarEventosCatalogo(eventos, {
+    deporte: deporteActivo,
+    nivel: nivelActivo,
+    consulta,
   });
   const plazasTotales = eventos.reduce((suma, evento) => suma + evento.plazasDisponibles, 0);
 
@@ -176,9 +182,17 @@ function App() {
       {editandoId ? (
         <FormularioEdicionEvento
           eventoId={editandoId}
-          onGuardar={() => {
-            // El envío a la API llega con el endpoint de actualización (G3P-56).
-            setAviso({ tipo: "error", texto: "El guardado de cambios aún no está disponible." });
+          onGuardar={async (eventoId, cuerpo) => {
+            // Si la API rechaza el cambio, el error sube al formulario, que muestra el modal o la alerta.
+            const actualizado = await actualizarEvento(eventoId, cuerpo, USUARIO_DEMO);
+            setEventos((actuales) =>
+              actuales
+                .map((actual) => (actual.id === actualizado.id ? actualizado : actual))
+                .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime()),
+            );
+            setEventoSeleccionado((actual) => (actual?.id === actualizado.id ? actualizado : actual));
+            setEditandoId(null);
+            setAviso({ tipo: "exito", texto: `Cambios guardados en «${actualizado.titulo}».` });
           }}
           onCancelar={() => setEditandoId(null)}
         />
@@ -193,7 +207,7 @@ function App() {
         />
       ) : eventoSeleccionado ? (
         <main className="contenido contenido--ficha">
-          <button className="enlace-volver" type="button" onClick={() => setEventoSeleccionado(null)}>
+          <button className="enlace-volver" type="button" onClick={() => { setEventoSeleccionado(null); if (!viendoMisActividades) requestAnimationFrame(() => window.scrollTo(0, scrollPrevio)); }}>
             {viendoMisActividades ? "Volver a mis actividades" : "Volver al catálogo"}
           </button>
           <div className="ficha-cabecera">
@@ -289,18 +303,40 @@ function App() {
               <span className="sr-only">Buscar actividad, instalación o campus</span>
               <input value={consulta} onChange={(evento) => setConsulta(evento.target.value)} placeholder="Buscar actividad, instalación o campus" />
             </label>
-            <div className="filtros-deporte" aria-label="Filtrar por deporte">
-              {DEPORTES.map((deporte) => (
-                <button
-                  key={deporte}
-                  className={deporteActivo === deporte ? "filtro filtro--activo" : "filtro"}
-                  type="button"
-                  aria-pressed={deporteActivo === deporte}
-                  onClick={() => setDeporteActivo(deporte)}
-                >
-                  {deporte === "todos" ? "Todos" : NOMBRE_DEPORTE[deporte]}
-                </button>
-              ))}
+            <div className="filtros-seccion">
+              <div className="filtros-grupo">
+                <span className="filtros-grupo__etiqueta">Modalidad deportiva:</span>
+                <div className="filtros-deporte" role="group" aria-label="Filtrar por deporte">
+                  {DEPORTES.map((deporte) => (
+                    <button
+                      key={deporte}
+                      className={deporteActivo === deporte ? "filtro filtro--activo" : "filtro"}
+                      type="button"
+                      aria-pressed={deporteActivo === deporte}
+                      onClick={() => setDeporteActivo((actual) => alternarFiltroDeporte(actual, deporte))}
+                    >
+                      {deporte === "todos" ? "Todos los deportes" : NOMBRE_DEPORTE[deporte]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filtros-grupo">
+                <span className="filtros-grupo__etiqueta">Nivel de exigencia física:</span>
+                <div className="filtros-nivel" role="group" aria-label="Filtrar por nivel de exigencia">
+                  {NIVELES_FILTRO.map((nivel) => (
+                    <button
+                      key={nivel}
+                      className={nivelActivo === nivel ? "filtro filtro--activo" : "filtro"}
+                      type="button"
+                      aria-pressed={nivelActivo === nivel}
+                      onClick={() => setNivelActivo((actual) => alternarFiltroNivel(actual, nivel))}
+                    >
+                      {nivel === "todos" ? "Todos los niveles" : NOMBRE_NIVEL[nivel]}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
@@ -325,14 +361,53 @@ function App() {
                     evento={evento}
                     reservando={reservandoId === evento.id}
                     estadoReserva={reservas[evento.id]}
-                    onAbrir={() => setEventoSeleccionado(evento)}
+                    onAbrir={() => { setScrollPrevio(window.scrollY); setEventoSeleccionado(evento); }}
                     onReservar={() => void gestionarReserva(evento)}
                     onConfirmarCancelacion={gestionarCancelacion}
                   />
                 ))}
               </div>
             ) : (
-              <div className="estado-pagina">No hay actividades que coincidan con la búsqueda.</div>
+              <div className="estado-pagina" role="status">
+                <p>
+                  {nivelActivo !== "todos"
+                    ? MENSAJE_SIN_EVENTOS_NIVEL
+                    : MENSAJE_SIN_EVENTOS_CATEGORIA}
+                </p>
+                {(deporteActivo !== "todos" || nivelActivo !== "todos" || consulta.trim() !== "") && (
+                  <div className="acciones-estado-vacio">
+                    {nivelActivo !== "todos" && (
+                      <button
+                        className="boton boton--secundario"
+                        type="button"
+                        onClick={() => setNivelActivo("todos")}
+                      >
+                        Ver todos los niveles
+                      </button>
+                    )}
+                    {deporteActivo !== "todos" && (
+                      <button
+                        className="boton boton--secundario"
+                        type="button"
+                        onClick={() => setDeporteActivo("todos")}
+                      >
+                        Ver todos los deportes
+                      </button>
+                    )}
+                    <button
+                      className="boton boton--primario"
+                      type="button"
+                      onClick={() => {
+                        setDeporteActivo("todos");
+                        setNivelActivo("todos");
+                        setConsulta("");
+                      }}
+                    >
+                      Restablecer todos los filtros
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </section>
           <footer className="pie">Universidad Rey Juan Carlos · Healthy Life</footer>
@@ -369,7 +444,7 @@ function BotonReserva({
       : estadoReserva === "en_espera"
         ? "En lista de espera"
         : sinPlazas
-          ? "Sin plazas"
+          ? "Aforo completo"
           : "Reservar plaza";
 
   return (
