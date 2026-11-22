@@ -132,3 +132,13 @@ export async function cargarMisActividades(usuarioId: string): Promise<Evento[]>
   const datos = (await respuesta.json()) as { eventos: Evento[] };
   return datos.eventos;
 }
+
+/** Histórico (HU-21): actividades pasadas en las que participó el usuario. */
+export async function cargarHistorico(usuarioId: string): Promise<Evento[]> {
+  const respuesta = await fetch("/api/v1/me/events/history", { headers: { "X-User-Id": usuarioId } });
+  if (!respuesta.ok) {
+    throw new ApiError(respuesta.status, "No se ha podido cargar tu historial deportivo.");
+  }
+  const datos = (await respuesta.json()) as { eventos: Evento[] };
+  return datos.eventos;
+}

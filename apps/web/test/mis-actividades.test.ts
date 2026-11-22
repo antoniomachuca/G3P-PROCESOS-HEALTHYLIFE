@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { renderToString } from "react-dom/server";
 import { createElement } from "react";
-import { cargarMisActividades } from "../src/api";
+import { cargarHistorico, cargarMisActividades } from "../src/api";
+import { PanelAccionesEvento } from "../src/components/PanelAccionesEvento";
+import { VistaPanelHistorico } from "../src/components/PanelHistorico";
 import { VistaPanelMisActividades, type EstadoPanel } from "../src/components/PanelMisActividades";
 import type { Evento } from "../src/tipos";
 
@@ -36,6 +38,17 @@ function evento(id: string, titulo: string): Evento {
 function pintar(estado: EstadoPanel): string {
   return renderToString(
     createElement(VistaPanelMisActividades, {
+      estado,
+      onAbrir: () => {},
+      onReintentar: () => {},
+      onExplorarCatalogo: () => {},
+    }),
+  );
+}
+
+function pintarHistorico(estado: EstadoPanel): string {
+  return renderToString(
+    createElement(VistaPanelHistorico, {
       estado,
       onAbrir: () => {},
       onReintentar: () => {},
@@ -80,6 +93,63 @@ test("HU-17: cargarMisActividades llama a GET /api/v1/me/events con X-User-Id", 
     assert.equal(url, "/api/v1/me/events");
     assert.equal(usuario, "usr_mock_010");
     assert.equal(eventos.length, 1);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+  }
+});
+
+test("HU-21: el histórico muestra las actividades en el orden recibido y sin acciones de reserva", () => {
+  const html = pintarHistorico({
+    tipo: "listo",
+    eventos: [evento("evt_reciente", "Actividad reciente"), evento("evt_antigua", "Actividad antigua")],
+  });
+  assert.ok(html.indexOf("Actividad reciente") < html.indexOf("Actividad antigua"));
+  assert.match(html, /Actividad pasada/);
+  assert.doesNotMatch(html, /Cancelar|Reservar|Editar actividad/);
+});
+
+test("HU-21: el estado vacío explica que aún no hay registros y permite explorar actividades", () => {
+  const html = pintarHistorico({ tipo: "listo", eventos: [] });
+  assert.match(html, /Aún no tienes registros en tu historial deportivo/);
+  assert.match(html, /href="#catalogo"/);
+  assert.match(html, /Explorar actividades/);
+});
+
+test("HU-21: los errores de historial muestran una alerta y permiten reintentar", () => {
+  const html = pintarHistorico({ tipo: "error" });
+  assert.match(html, /role="alert"/);
+  assert.match(html, /No se ha podido cargar tu historial/);
+  assert.match(html, /Reintentar/);
+});
+
+test("HU-21: el modo de solo lectura oculta las acciones y mantiene el mensaje del historial", () => {
+  const html = renderToString(
+    createElement(PanelAccionesEvento, {
+      soloLectura: true,
+      children: createElement("button", null, "Cancelar reserva"),
+    }),
+  );
+  assert.match(html, /modo de solo lectura/);
+  assert.doesNotMatch(html, /Cancelar reserva/);
+});
+
+test("HU-21: cargarHistorico usa el endpoint del usuario y falla explícitamente ante un error", async () => {
+  const fetchOriginal = globalThis.fetch;
+  let url = "";
+  let usuario = "";
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    url = String(input);
+    usuario = (init?.headers as Record<string, string>)["X-User-Id"];
+    return new Response(JSON.stringify({ eventos: [evento("evt_1", "Pádel")] }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    const eventos = await cargarHistorico("usr_mock_010");
+    assert.equal(url, "/api/v1/me/events/history");
+    assert.equal(usuario, "usr_mock_010");
+    assert.equal(eventos.length, 1);
+
+    globalThis.fetch = (async () => new Response(null, { status: 500 })) as typeof fetch;
+    await assert.rejects(cargarHistorico("usr_mock_010"), /No se ha podido cargar tu historial deportivo/);
   } finally {
     globalThis.fetch = fetchOriginal;
   }

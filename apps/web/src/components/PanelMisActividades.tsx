@@ -9,8 +9,18 @@ export type EstadoPanel =
   | { tipo: "error" }
   | { tipo: "listo"; eventos: Evento[] };
 
-/** Tarjeta de una actividad confirmada (G3P-51). Toda la tarjeta abre la ficha (G3P-54). */
-export function TarjetaMiActividad({ evento, onAbrir }: { evento: Evento; onAbrir: (evento: Evento) => void }) {
+/** Tarjeta de actividad personal; toda la tarjeta abre su ficha. */
+export function TarjetaMiActividad({
+  evento,
+  onAbrir,
+  textoEstado = "Plaza confirmada",
+  historica = false,
+}: {
+  evento: Evento;
+  onAbrir: (evento: Evento) => void;
+  textoEstado?: string;
+  historica?: boolean;
+}) {
   return (
     <li className="mi-actividad">
       <button
@@ -21,7 +31,9 @@ export function TarjetaMiActividad({ evento, onAbrir }: { evento: Evento; onAbri
       >
         <span className="mi-actividad__cabecera">
           <span className="insignia insignia--deporte">{NOMBRE_DEPORTE[evento.deporte].toUpperCase()}</span>
-          <span className="mi-actividad__estado">Plaza confirmada</span>
+          <span className={`mi-actividad__estado${historica ? " mi-actividad__estado--historica" : ""}`}>
+            {textoEstado}
+          </span>
         </span>
         <span className="mi-actividad__titulo">{evento.titulo}</span>
         <span className="mi-actividad__dato">
