@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "./catalogo.ts";
+import { actividadesHistoricas, esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "./catalogo.ts";
 import { DEPORTES, NIVELES, type CatalogoEventos, type Evento } from "./modelo.ts";
 
 const semilla = JSON.parse(
@@ -43,6 +43,18 @@ test("un evento en curso (fin futuro) sigue visible", () => {
 test("un evento completo (0 plazas) sigue en el catálogo mientras esté abierto", () => {
   const completo = { ...evento("evt_lleno", "2026-10-20T10:00:00+02:00", "2026-10-20T11:00:00+02:00"), plazasDisponibles: 0 };
   assert.equal(eventosActivos([completo], ahora).length, 1);
+});
+
+test("HU-21: ordena las actividades concluidas de la más reciente a la más antigua", () => {
+  const antigua = evento("evt_antigua", "2026-09-10T10:00:00+02:00", "2026-09-10T11:00:00+02:00");
+  const reciente = evento("evt_reciente", "2026-10-01T10:00:00+02:00", "2026-10-01T11:00:00+02:00", "finalizada");
+  const futura = evento("evt_futura", "2026-10-20T10:00:00+02:00", "2026-10-20T11:00:00+02:00");
+  const cancelada = evento("evt_cancelada", "2026-10-05T10:00:00+02:00", "2026-10-05T11:00:00+02:00", "cancelada");
+
+  assert.deepEqual(actividadesHistoricas([antigua, futura, cancelada, reciente], ahora).map((e) => e.id), [
+    "evt_reciente",
+    "evt_antigua",
+  ]);
 });
 
 test("la semilla: ids únicos, vocabulario válido y plazas coherentes", () => {

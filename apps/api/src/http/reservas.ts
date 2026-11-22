@@ -2,7 +2,14 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { EventStore } from "../domain/event-store.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
 import { ErrorDeEdicion } from "../domain/edicion-evento.ts";
-import { actividadesProximas, esDeporteValido, esNivelValido, eventosActivos, filtrarCatalogo } from "../domain/catalogo.ts";
+import {
+  actividadesHistoricas,
+  actividadesProximas,
+  esDeporteValido,
+  esNivelValido,
+  eventosActivos,
+  filtrarCatalogo,
+} from "../domain/catalogo.ts";
 import { manejarEventosUsuario } from "./eventos-usuario.ts";
 
 const ORIGEN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
@@ -37,6 +44,25 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     const campus = url.searchParams.get("campus")?.trim() ?? "";
     const activos = eventosActivos(store.listarEventos());
     const eventos = filtrarCatalogo(activos, { deporte, nivel, campus });
+    responder(res, 200, { eventos });
+    return;
+  }
+
+  // HU-21 / G3P-89: historial de reservas confirmadas o asistidas, solo con actividades concluidas.
+  if (req.method === "GET" && (ruta === "/api/v1/me/events/history" || ruta === "/me/events/history")) {
+    const usuarioId = cabecera(req, "x-user-id");
+    if (!usuarioId) {
+      responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
+      return;
+    }
+
+    const eventosParticipados = new Set(
+      store
+        .listarReservasPorUsuario(usuarioId)
+        .filter((reserva) => reserva.estado === "confirmada" || reserva.estado === "asistida")
+        .map((reserva) => reserva.eventoId),
+    );
+    const eventos = actividadesHistoricas(store.listarEventos().filter((evento) => eventosParticipados.has(evento.id)));
     responder(res, 200, { eventos });
     return;
   }

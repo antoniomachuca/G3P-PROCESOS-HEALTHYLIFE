@@ -33,6 +33,14 @@ export function actividadesProximas(eventosConfirmados: Evento[], ahora: Date = 
   return eventosActivos(eventosConfirmados, ahora);
 }
 
+/** Histórico (HU-21): actividades no canceladas cuyo fin ya pasó, de la más reciente a la más antigua. */
+export function actividadesHistoricas(eventosParticipados: Evento[], ahora: Date = new Date()): Evento[] {
+  const ahoraMs = ahora.getTime();
+  return eventosParticipados
+    .filter((evento) => evento.estado !== "cancelada" && Date.parse(evento.fin) <= ahoraMs)
+    .sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio));
+}
+
 /**
  * Filtra los eventos del catálogo por modalidad deportiva y de forma combinada
  * con otros criterios activos como campus/municipio o nivel requerido (HU-03 / G3P-14).

@@ -108,6 +108,12 @@ HU-17 (G3P-28): `GET /api/v1/me/events` devuelve `{ "eventos": [...] }` con las 
 curl http://127.0.0.1:3001/api/v1/me/events -H 'X-User-Id: usr_mock_010'
 ```
 
+HU-21 (G3P-46): `GET /api/v1/me/events/history` devuelve `{ "eventos": [...] }` con las actividades concluidas en las que el usuario tuvo una reserva `confirmada` o `asistida`, ordenadas por inicio de la más reciente a la más antigua. No incluye reservas canceladas, en espera ni actividades futuras o canceladas. Requiere la cabecera `X-User-Id` (sin ella responde `400`). La pestaña **Histórico** muestra un mensaje si no hay registros; las fichas son de solo lectura, sin acciones de reserva, cancelación o edición.
+
+```bash
+curl http://127.0.0.1:3001/api/v1/me/events/history -H 'X-User-Id: usr_mock_010'
+```
+
 G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
 
 

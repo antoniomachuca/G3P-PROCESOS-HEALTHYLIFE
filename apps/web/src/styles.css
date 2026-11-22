@@ -406,11 +406,13 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 .mi-actividad__boton:hover, .mi-actividad__boton:focus-visible { border-color: var(--urjc-black); border-left-color: var(--urjc-red); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
 .mi-actividad__cabecera { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .mi-actividad__estado { color: var(--success); font-size: 12px; font-weight: 700; }
+.mi-actividad__estado--historica { color: var(--muted); }
 .mi-actividad__titulo { font-size: 19px; font-weight: 700; line-height: 1.25; }
 .mi-actividad__dato { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); font-size: 14px; }
 .mi-actividad__dato svg { flex: none; margin-top: 2px; }
 .estado-pagina--vacio { min-height: 220px; }
 .estado-pagina--vacio .boton { justify-self: center; text-decoration: none; }
+.reserva-panel--solo-lectura p:last-child { margin-bottom: 0; color: var(--muted); line-height: 1.5; }
 @media (max-width: 900px) { .lista-mis-actividades { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 650px) { .lista-mis-actividades { grid-template-columns: 1fr; } }
 
