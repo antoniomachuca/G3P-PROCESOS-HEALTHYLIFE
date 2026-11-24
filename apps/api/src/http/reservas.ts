@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { EventStore } from "../domain/event-store.ts";
+import { ISO_CON_OFFSET } from "../domain/modelo.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
 import { ErrorDeEdicion } from "../domain/edicion-evento.ts";
 import {
@@ -104,11 +105,34 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
           return;
         }
 
+        const aforoMinimo =
+          payload.aforoMinimo === undefined || payload.aforoMinimo === null || payload.aforoMinimo === ""
+            ? null
+            : payload.aforoMinimo;
+        const fechaLimiteInscripcion =
+          payload.fechaLimiteInscripcion === undefined ||
+          payload.fechaLimiteInscripcion === null ||
+          payload.fechaLimiteInscripcion === ""
+            ? null
+            : payload.fechaLimiteInscripcion;
+
+        if (
+          typeof fechaLimiteInscripcion === "string" &&
+          ISO_CON_OFFSET.test(fechaLimiteInscripcion) &&
+          !Number.isNaN(Date.parse(fechaLimiteInscripcion)) &&
+          Date.parse(fechaLimiteInscripcion) <= Date.now()
+        ) {
+          responder(res, 400, { mensaje: "La fecha límite de inscripción debe ser futura" });
+          return;
+        }
+
         const nuevoEvento = {
           ...payload,
           id: `evt_${Date.now()}`,
           estado: "abierta",
-          plazasDisponibles: payload.aforoMaximo
+          plazasDisponibles: payload.aforoMaximo,
+          aforoMinimo,
+          fechaLimiteInscripcion,
         };
 
         store.guardarEvento(nuevoEvento);

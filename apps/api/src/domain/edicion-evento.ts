@@ -1,4 +1,4 @@
-import { NIVELES, type Evento, type Nivel } from "./modelo.ts";
+import { ISO_CON_OFFSET, NIVELES, type Evento, type Nivel } from "./modelo.ts";
 
 // HU-08 / G3P-56: qué puede cambiar el organizador de un evento y con qué reglas.
 
@@ -30,12 +30,23 @@ export type CambiosEvento = {
   puntoEncuentro?: string;
   material?: string[];
   aforoMaximo?: number;
+  aforoMinimo?: number | null;
+  fechaLimiteInscripcion?: string | null;
 };
 
-const EDITABLES = new Set(["titulo", "descripcion", "inicio", "fin", "nivel", "lugar", "material", "aforoMaximo"]);
+const EDITABLES = new Set([
+  "titulo",
+  "descripcion",
+  "inicio",
+  "fin",
+  "nivel",
+  "lugar",
+  "material",
+  "aforoMaximo",
+  "aforoMinimo",
+  "fechaLimiteInscripcion",
+]);
 const LUGAR_EDITABLE = new Set(["puntoEncuentro"]);
-// ISO-8601 con offset obligatorio, como el resto del contrato.
-const ISO_CON_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?([+-]\d{2}:\d{2}|Z)$/;
 
 function esObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === "object" && valor !== null && !Array.isArray(valor);
@@ -139,17 +150,59 @@ export function validarCambiosEvento(cuerpo: unknown, actual: Evento, ahora: Dat
     cambios.aforoMaximo = aforo;
   }
 
+  if ("aforoMinimo" in cuerpo) {
+    const minimo = cuerpo.aforoMinimo;
+    if (minimo === null) {
+      cambios.aforoMinimo = null;
+    } else if (typeof minimo !== "number" || !Number.isInteger(minimo) || minimo < 1) {
+      throw new ErrorDeEdicion("datos_invalidos", "El aforo mínimo debe ser un número entero mayor que cero");
+    } else {
+      cambios.aforoMinimo = minimo;
+    }
+  }
+
+  const aforoMaximoFinal = cambios.aforoMaximo ?? actual.aforoMaximo;
+  const aforoMinimoFinal = "aforoMinimo" in cambios ? cambios.aforoMinimo : (actual.aforoMinimo ?? null);
+  if (aforoMinimoFinal !== null && aforoMinimoFinal !== undefined && aforoMinimoFinal > aforoMaximoFinal) {
+    throw new ErrorDeEdicion("datos_invalidos", "El aforo mínimo no puede superar el aforo máximo");
+  }
+
   if ("inicio" in cuerpo) cambios.inicio = fecha(cuerpo.inicio, "inicio");
   if ("fin" in cuerpo) cambios.fin = fecha(cuerpo.fin, "fin");
 
+  if ("fechaLimiteInscripcion" in cuerpo) {
+    const limite = cuerpo.fechaLimiteInscripcion;
+    if (limite === null) {
+      cambios.fechaLimiteInscripcion = null;
+    } else {
+      cambios.fechaLimiteInscripcion = fecha(limite, "fechaLimiteInscripcion");
+    }
+  }
+
   if (cambios.inicio !== undefined && Date.parse(cambios.inicio) <= ahora.getTime()) {
     throw new ErrorDeEdicion("fecha_pasada", "La nueva fecha de inicio debe ser futura");
+  }
+  if (
+    cambios.fechaLimiteInscripcion !== undefined &&
+    cambios.fechaLimiteInscripcion !== null &&
+    Date.parse(cambios.fechaLimiteInscripcion) <= ahora.getTime()
+  ) {
+    throw new ErrorDeEdicion("fecha_pasada", "La fecha límite de inscripción debe ser futura");
   }
   if (cambios.inicio !== undefined || cambios.fin !== undefined) {
     const inicio = Date.parse(cambios.inicio ?? actual.inicio);
     const fin = Date.parse(cambios.fin ?? actual.fin);
     if (fin <= inicio) {
       throw new ErrorDeEdicion("datos_invalidos", "La hora de fin debe ser posterior a la de inicio");
+    }
+  }
+
+  const limiteFinal =
+    "fechaLimiteInscripcion" in cambios ? cambios.fechaLimiteInscripcion : (actual.fechaLimiteInscripcion ?? null);
+  if (limiteFinal !== null && limiteFinal !== undefined && ("fechaLimiteInscripcion" in cambios || cambios.inicio !== undefined)) {
+    const inicioFinal = Date.parse(cambios.inicio ?? actual.inicio);
+    if (Date.parse(limiteFinal) >= inicioFinal) {
+      throw new ErrorDeEdicion("datos_invalidos", "La fecha límite de inscripción debe ser anterior al inicio del evento");
     }
   }
 

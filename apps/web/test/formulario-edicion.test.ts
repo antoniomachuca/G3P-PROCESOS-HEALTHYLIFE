@@ -48,10 +48,13 @@ describe("HU-08 / G3P-55: precarga del formulario de edición", () => {
       fecha: "2026-11-20",
       horaInicio: "18:00",
       horaFin: "19:30",
+      fechaLimite: "",
+      horaLimite: "",
       puntoEncuentro: "Fuente del jardín",
       nivel: "intermedio",
       material: "Esterilla, Toalla",
       aforoMaximo: 12,
+      aforoMinimo: "",
       deporte: "yoga",
       lugar: "Jardín central · Fuenlabrada",
       plazasOcupadas: 3,
@@ -81,6 +84,8 @@ describe("HU-08 / G3P-55: precarga del formulario de edición", () => {
       puntoEncuentro: EVENTO.lugar.puntoEncuentro,
       material: EVENTO.material,
       aforoMaximo: EVENTO.aforoMaximo,
+      aforoMinimo: null,
+      fechaLimiteInscripcion: null,
     });
   });
 

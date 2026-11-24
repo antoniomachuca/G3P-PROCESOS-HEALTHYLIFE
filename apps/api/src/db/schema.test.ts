@@ -57,6 +57,8 @@ test("la migración crea eventos y reservas y no se vuelve a aplicar", () => {
   const columnas = db.prepare("PRAGMA table_info(eventos)").all().map((row) => String(row.name));
   assert.ok(columnas.includes("capacidad"));
   assert.ok(columnas.includes("plazas_libres"));
+  assert.ok(columnas.includes("aforo_minimo"));
+  assert.ok(columnas.includes("fecha_limite_inscripcion"));
   assert.ok(columnas.includes("estado"));
 
   const otraVez = migrate(db);
@@ -69,6 +71,9 @@ test("rechaza aforo imposible y estados fuera del vocabulario", () => {
   assert.throws(() => insertarEventoMinimo(db, { plazas_libres: -1 }), /CHECK constraint failed/);
   assert.throws(() => insertarEventoMinimo(db, { plazas_libres: 9, capacidad: 8 }), /CHECK constraint failed/);
   assert.throws(() => insertarEventoMinimo(db, { capacidad: -1, plazas_libres: 0 }), /CHECK constraint failed/);
+  assert.throws(() => insertarEventoMinimo(db, { aforo_minimo: 0 }), /CHECK constraint failed/);
+  assert.throws(() => insertarEventoMinimo(db, { aforo_minimo: 9, capacidad: 8 }), /CHECK constraint failed/);
+  assert.throws(() => insertarEventoMinimo(db, { fecha_limite_inscripcion: "   " }), /CHECK constraint failed/);
   assert.throws(() => insertarEventoMinimo(db, { estado: "Confirmada" }), /CHECK constraint failed/);
   assert.throws(() => insertarEventoMinimo(db, { id: "evento_1" }), /CHECK constraint failed/);
   db.close();

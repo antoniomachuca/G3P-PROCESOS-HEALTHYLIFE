@@ -29,6 +29,10 @@ export type Evento = {
   lugar: Lugar;
   aforoMaximo: number;
   plazasDisponibles: number;
+  /** Cupo mínimo opcional de asistentes para garantizar la viabilidad del evento (HU-11). */
+  aforoMinimo?: number | null;
+  /** Fecha y hora límite ISO-8601 con offset para inscripciones previas (HU-11). */
+  fechaLimiteInscripcion?: string | null;
   material: string[];
   estado: EstadoEvento;
   organizadorId: string;
@@ -37,6 +41,9 @@ export type Evento = {
   /** Ruta o URL de la imagen del evento. Si falta, la interfaz muestra un hueco gris. */
   imagenUrl?: string | null;
 };
+
+/** ISO-8601 con offset obligatorio (p. ej. 2026-10-18T10:00:00+02:00 o Z). */
+export const ISO_CON_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?([+-]\d{2}:\d{2}|Z)$/;
 
 export type Reserva = {
   id: string;
@@ -78,6 +85,28 @@ export function assertEvento(evento: Evento): void {
   }
   if (evento.plazasDisponibles > evento.aforoMaximo) {
     throw new Error("Las plazas libres no pueden superar la capacidad");
+  }
+  if (evento.aforoMinimo !== undefined && evento.aforoMinimo !== null) {
+    if (typeof evento.aforoMinimo !== "number" || !Number.isInteger(evento.aforoMinimo) || evento.aforoMinimo < 1) {
+      throw new Error("El aforo mínimo debe ser un número entero mayor que cero");
+    }
+    if (evento.aforoMinimo > evento.aforoMaximo) {
+      throw new Error("El aforo mínimo no puede superar el aforo máximo");
+    }
+  }
+  if (evento.fechaLimiteInscripcion !== undefined && evento.fechaLimiteInscripcion !== null) {
+    if (
+      typeof evento.fechaLimiteInscripcion !== "string" ||
+      !ISO_CON_OFFSET.test(evento.fechaLimiteInscripcion) ||
+      Number.isNaN(Date.parse(evento.fechaLimiteInscripcion))
+    ) {
+      throw new Error("La fecha límite de inscripción debe ser una fecha ISO-8601 con zona horaria");
+    }
+    const inicioMs = Date.parse(evento.inicio);
+    const limiteMs = Date.parse(evento.fechaLimiteInscripcion);
+    if (Number.isFinite(inicioMs) && limiteMs >= inicioMs) {
+      throw new Error("La fecha límite de inscripción debe ser anterior al inicio del evento");
+    }
   }
   if (!Array.isArray(evento.material) || evento.material.some((item) => typeof item !== "string")) {
     throw new Error("El material debe ser una lista de textos");

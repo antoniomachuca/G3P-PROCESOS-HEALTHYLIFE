@@ -257,6 +257,23 @@ function App() {
                 <span className="dato-evento__etiqueta">Material</span>
                 <strong>{eventoSeleccionado.material.length ? eventoSeleccionado.material.join(", ") : "No se requiere material"}</strong>
               </div>
+              {eventoSeleccionado.aforoMinimo != null && (
+                <div className="dato-evento">
+                  <span className="dato-evento__etiqueta">Aforo mínimo</span>
+                  <strong>
+                    {eventoSeleccionado.aforoMinimo}{" "}
+                    {eventoSeleccionado.aforoMinimo === 1 ? "participante" : "participantes"}
+                  </strong>
+                  <span>Cupo mínimo para garantizar la actividad</span>
+                </div>
+              )}
+              {eventoSeleccionado.fechaLimiteInscripcion && (
+                <div className="dato-evento">
+                  <span className="dato-evento__etiqueta">Límite de inscripción</span>
+                  <strong>{fechaCompleta(eventoSeleccionado.fechaLimiteInscripcion)}</strong>
+                  <span>Hasta las {hora(eventoSeleccionado.fechaLimiteInscripcion)}</span>
+                </div>
+              )}
             </section>
             <PanelAccionesEvento soloLectura={viendoHistorico}>
               <aside className="reserva-panel" aria-label="Reserva de plaza">

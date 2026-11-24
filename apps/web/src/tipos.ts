@@ -22,6 +22,8 @@ export type Evento = {
   lugar: Lugar;
   aforoMaximo: number;
   plazasDisponibles: number;
+  aforoMinimo?: number | null;
+  fechaLimiteInscripcion?: string | null;
   material: string[];
   estado: "abierta" | "cancelada" | "finalizada";
   organizadorId: string;

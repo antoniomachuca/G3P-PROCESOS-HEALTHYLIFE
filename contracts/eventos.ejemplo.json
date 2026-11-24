@@ -1,7 +1,7 @@
 {
   "version": "1",
   "modulo": "E3",
-  "descripcion": "Mock de intercambio del Equipo 3. El listado de eventos usa la clave eventos. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. imagenUrl es la ruta o URL de la imagen del evento (puede ser null). ejemploReserva es la respuesta de POST /api/v1/events/{id}/reservations y no forma parte del listado.",
+  "descripcion": "Mock de intercambio del Equipo 3. El listado de eventos usa la clave eventos. userId pertenece a E1, communityGroupId a E4 y routineId a E5: son strings opacos. imagenUrl es la ruta o URL de la imagen del evento (puede ser null). aforoMinimo (entero >= 1 y <= aforoMaximo) y fechaLimiteInscripcion (ISO-8601 con offset anterior a inicio) son opcionales (pueden ser null). ejemploReserva es la respuesta de POST /api/v1/events/{id}/reservations y no forma parte del listado.",
 
   "eventos": [
     {
@@ -22,6 +22,8 @@
       },
       "aforoMaximo": 8,
       "plazasDisponibles": 3,
+      "aforoMinimo": 4,
+      "fechaLimiteInscripcion": "2026-10-18T08:00:00+02:00",
       "material": [
         "Pala",
         "Zapatillas de pista"
@@ -50,6 +52,8 @@
       },
       "aforoMaximo": 20,
       "plazasDisponibles": 0,
+      "aforoMinimo": null,
+      "fechaLimiteInscripcion": null,
       "material": [
         "Zapatillas de running"
       ],
@@ -77,6 +81,8 @@
       },
       "aforoMaximo": 15,
       "plazasDisponibles": 0,
+      "aforoMinimo": null,
+      "fechaLimiteInscripcion": null,
       "material": [
         "Esterilla"
       ],

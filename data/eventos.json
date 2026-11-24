@@ -21,6 +21,8 @@
       },
       "aforoMaximo": 8,
       "plazasDisponibles": 3,
+      "aforoMinimo": 4,
+      "fechaLimiteInscripcion": "2026-10-18T08:00:00+02:00",
       "material": [
         "Pala",
         "Zapatillas de pista"
@@ -76,6 +78,8 @@
       },
       "aforoMaximo": 14,
       "plazasDisponibles": 1,
+      "aforoMinimo": 10,
+      "fechaLimiteInscripcion": "2026-10-20T18:30:00+02:00",
       "material": [
         "Botas de fútbol sala",
         "Espinilleras"

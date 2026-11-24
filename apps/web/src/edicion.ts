@@ -11,10 +11,13 @@ export type ValoresEdicion = {
   fecha: string; // AAAA-MM-DD
   horaInicio: string; // HH:mm
   horaFin: string; // HH:mm
+  fechaLimite: string; // AAAA-MM-DD o ""
+  horaLimite: string; // HH:mm o ""
   puntoEncuentro: string;
   nivel: Nivel;
   material: string; // separado por comas
   aforoMaximo: number;
+  aforoMinimo: string; // entero en texto o ""
   // Solo lectura
   deporte: Evento["deporte"];
   lugar: string;
@@ -31,6 +34,8 @@ export type CambiosEvento = {
   puntoEncuentro: string;
   material: string[];
   aforoMaximo: number;
+  aforoMinimo: number | null;
+  fechaLimiteInscripcion: string | null;
 };
 
 function partesEnMadrid(iso: string): { fecha: string; hora: string } {
@@ -57,16 +62,20 @@ export function plazasOcupadas(evento: Pick<Evento, "aforoMaximo" | "plazasDispo
 export function valoresFormularioEdicion(evento: Evento): ValoresEdicion {
   const inicio = partesEnMadrid(evento.inicio);
   const fin = partesEnMadrid(evento.fin);
+  const limite = evento.fechaLimiteInscripcion ? partesEnMadrid(evento.fechaLimiteInscripcion) : null;
   return {
     titulo: evento.titulo,
     descripcion: evento.descripcion,
     fecha: inicio.fecha,
     horaInicio: inicio.hora,
     horaFin: fin.hora,
+    fechaLimite: limite?.fecha ?? "",
+    horaLimite: limite?.hora ?? "",
     puntoEncuentro: evento.lugar.puntoEncuentro,
     nivel: evento.nivel,
     material: evento.material.join(", "),
     aforoMaximo: evento.aforoMaximo,
+    aforoMinimo: evento.aforoMinimo != null ? String(evento.aforoMinimo) : "",
     deporte: evento.deporte,
     lugar: `${evento.lugar.nombre} · ${evento.lugar.municipio}`,
     plazasOcupadas: plazasOcupadas(evento),
@@ -100,6 +109,9 @@ export function isoEnMadrid(fecha: string, hora: string): string {
 }
 
 export function cambiosDesdeFormulario(valores: ValoresEdicion): CambiosEvento {
+  const minimoRaw = valores.aforoMinimo.trim();
+  const fechaLimiteRaw = valores.fechaLimite.trim();
+  const horaLimiteRaw = valores.horaLimite.trim();
   return {
     titulo: valores.titulo.trim(),
     descripcion: valores.descripcion.trim(),
@@ -112,6 +124,9 @@ export function cambiosDesdeFormulario(valores: ValoresEdicion): CambiosEvento {
       .map((item) => item.trim())
       .filter(Boolean),
     aforoMaximo: valores.aforoMaximo,
+    aforoMinimo: minimoRaw === "" ? null : Number.parseInt(minimoRaw, 10),
+    fechaLimiteInscripcion:
+      horaLimiteRaw === "" ? null : isoEnMadrid(fechaLimiteRaw || valores.fecha, horaLimiteRaw),
   };
 }
 
@@ -122,6 +137,12 @@ export type CuerpoActualizacion = Partial<Omit<CambiosEvento, "puntoEncuentro">>
 
 function mismoInstante(a: string, b: string): boolean {
   return Date.parse(a) === Date.parse(b);
+}
+
+function mismoInstanteOpcional(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return mismoInstante(a, b);
 }
 
 /**
@@ -138,6 +159,10 @@ export function cuerpoActualizacion(cambios: CambiosEvento, evento: Evento): Cue
   if (cambios.puntoEncuentro !== evento.lugar.puntoEncuentro) cuerpo.lugar = { puntoEncuentro: cambios.puntoEncuentro };
   if (cambios.material.join("\u0000") !== evento.material.join("\u0000")) cuerpo.material = cambios.material;
   if (cambios.aforoMaximo !== evento.aforoMaximo) cuerpo.aforoMaximo = cambios.aforoMaximo;
+  if ((cambios.aforoMinimo ?? null) !== (evento.aforoMinimo ?? null)) cuerpo.aforoMinimo = cambios.aforoMinimo;
+  if (!mismoInstanteOpcional(cambios.fechaLimiteInscripcion, evento.fechaLimiteInscripcion)) {
+    cuerpo.fechaLimiteInscripcion = cambios.fechaLimiteInscripcion;
+  }
   return cuerpo;
 }
 

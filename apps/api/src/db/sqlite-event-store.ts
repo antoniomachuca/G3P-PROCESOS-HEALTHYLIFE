@@ -22,6 +22,8 @@ type EventoRow = {
   lugar_lng: number;
   capacidad: number;
   plazas_libres: number;
+  aforo_minimo: number | null;
+  fecha_limite_inscripcion: string | null;
   material: string;
   estado: Evento["estado"];
   organizador_id: string;
@@ -40,8 +42,8 @@ type ReservaRow = {
 const EVENTO_COLUMNS = `
   id, titulo, deporte, nivel, descripcion, inicio, fin,
   lugar_nombre, lugar_punto_encuentro, lugar_municipio, lugar_direccion,
-  lugar_lat, lugar_lng, capacidad, plazas_libres, material, estado,
-  organizador_id, community_group_id, routine_id
+  lugar_lat, lugar_lng, capacidad, plazas_libres, aforo_minimo, fecha_limite_inscripcion,
+  material, estado, organizador_id, community_group_id, routine_id
 `;
 
 function eventoDesdeFila(row: EventoRow): Evento {
@@ -63,6 +65,8 @@ function eventoDesdeFila(row: EventoRow): Evento {
     },
     aforoMaximo: row.capacidad,
     plazasDisponibles: row.plazas_libres,
+    aforoMinimo: row.aforo_minimo,
+    fechaLimiteInscripcion: row.fecha_limite_inscripcion,
     material: JSON.parse(row.material) as string[],
     estado: row.estado,
     organizadorId: row.organizador_id,
@@ -93,7 +97,7 @@ export class SqliteEventStore implements EventStore {
     this.db
       .prepare(
         `INSERT INTO eventos (${EVENTO_COLUMNS})
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         evento.id,
@@ -111,6 +115,8 @@ export class SqliteEventStore implements EventStore {
         evento.lugar.lng,
         evento.aforoMaximo,
         evento.plazasDisponibles,
+        evento.aforoMinimo ?? null,
+        evento.fechaLimiteInscripcion ?? null,
         JSON.stringify(evento.material),
         evento.estado,
         evento.organizadorId,
@@ -196,6 +202,9 @@ export class SqliteEventStore implements EventStore {
       asegurarOrganizador(actual, usuarioId);
       const cambios = validarCambiosEvento(cuerpo, actual, ahora);
       const capacidad = cambios.aforoMaximo ?? actual.aforoMaximo;
+      const aforoMinimo = "aforoMinimo" in cambios ? cambios.aforoMinimo : (actual.aforoMinimo ?? null);
+      const fechaLimiteInscripcion =
+        "fechaLimiteInscripcion" in cambios ? cambios.fechaLimiteInscripcion : (actual.fechaLimiteInscripcion ?? null);
 
       // Las plazas libres se recalculan en SQL a partir de las ocupadas, y el WHERE vuelve a
       // impedir una capacidad por debajo de ellas aunque alguien se salte la validación.
@@ -204,6 +213,7 @@ export class SqliteEventStore implements EventStore {
           `UPDATE eventos SET
              titulo = ?, descripcion = ?, inicio = ?, fin = ?, nivel = ?,
              lugar_punto_encuentro = ?, material = ?,
+             aforo_minimo = ?, fecha_limite_inscripcion = ?,
              plazas_libres = ? - (capacidad - plazas_libres),
              capacidad = ?
            WHERE id = ? AND capacidad - plazas_libres <= ?`,
@@ -216,6 +226,8 @@ export class SqliteEventStore implements EventStore {
           cambios.nivel ?? actual.nivel,
           cambios.puntoEncuentro ?? actual.lugar.puntoEncuentro,
           JSON.stringify(cambios.material ?? actual.material),
+          aforoMinimo ?? null,
+          fechaLimiteInscripcion ?? null,
           capacidad,
           capacidad,
           id,

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ApiError, crearEvento } from "./api";
+import { isoEnMadrid } from "./edicion";
 import type { Evento } from "./tipos";
 
 type FormularioEventoProps = {
@@ -7,48 +8,126 @@ type FormularioEventoProps = {
   onCancelar: () => void;
 };
 
+export type DatosFormularioCreacion = {
+  titulo: string;
+  descripcion: string;
+  deporte: Evento["deporte"];
+  nivel: Evento["nivel"];
+  fecha: string;
+  hora: string;
+  duracion: string;
+  lugarNombre: string;
+  lugarPuntoEncuentro: string;
+  lugarMunicipio: string;
+  lugarDireccion: string;
+  aforoMaximo: string;
+  aforoMinimo: string;
+  fechaLimite: string;
+  horaLimite: string;
+  material: string;
+  organizadorId: string;
+};
+
+export type PayloadCreacionEvento = Omit<Evento, "id" | "estado" | "plazasDisponibles">;
+
+/** HU-11 / G3P-97: construye y valida el payload de alta incluyendo aforo mínimo y límite de inscripción. */
+export function construirPayloadCreacion(datos: DatosFormularioCreacion): PayloadCreacionEvento {
+  const duracionHoras = Number.parseInt(datos.duracion, 10) || 1;
+  const inicioIso = isoEnMadrid(datos.fecha, datos.hora);
+  const finDate = new Date(Date.parse(inicioIso) + duracionHoras * 3_600_000);
+  const aforoMaximo = Number.parseInt(datos.aforoMaximo, 10);
+
+  let aforoMinimo: number | null = null;
+  const minimoRaw = datos.aforoMinimo.trim();
+  if (minimoRaw !== "") {
+    const minimo = Number(minimoRaw);
+    if (!Number.isInteger(minimo) || minimo < 1) {
+      throw new Error("El aforo mínimo debe ser un número entero mayor que cero.");
+    }
+    if (Number.isFinite(aforoMaximo) && minimo > aforoMaximo) {
+      throw new Error("El aforo mínimo no puede superar el aforo máximo.");
+    }
+    aforoMinimo = minimo;
+  }
+
+  let fechaLimiteInscripcion: string | null = null;
+  const fechaLimiteRaw = datos.fechaLimite.trim();
+  const horaLimiteRaw = datos.horaLimite.trim();
+  if (fechaLimiteRaw !== "" && horaLimiteRaw === "") {
+    throw new Error("Indica también la hora límite de inscripción.");
+  }
+  if (horaLimiteRaw !== "") {
+    const diaLimite = fechaLimiteRaw !== "" ? fechaLimiteRaw : datos.fecha;
+    fechaLimiteInscripcion = isoEnMadrid(diaLimite, horaLimiteRaw);
+    if (Date.parse(fechaLimiteInscripcion) >= Date.parse(inicioIso)) {
+      throw new Error("La fecha límite de inscripción debe ser anterior al inicio del evento.");
+    }
+  }
+
+  return {
+    titulo: datos.titulo.trim(),
+    descripcion: datos.descripcion.trim(),
+    deporte: datos.deporte,
+    nivel: datos.nivel,
+    inicio: inicioIso,
+    fin: finDate.toISOString(),
+    lugar: {
+      nombre: datos.lugarNombre.trim(),
+      puntoEncuentro: datos.lugarPuntoEncuentro.trim(),
+      municipio: datos.lugarMunicipio.trim(),
+      direccion: datos.lugarDireccion.trim(),
+      lat: 40.4168,
+      lng: -3.7038,
+    },
+    aforoMaximo,
+    aforoMinimo,
+    fechaLimiteInscripcion,
+    material: datos.material ? datos.material.split(",").map((i) => i.trim()).filter(Boolean) : [],
+    organizadorId: datos.organizadorId,
+    communityGroupId: null,
+    routineId: null,
+  };
+}
+
 export function FormularioEvento({ onCreado, onCancelar }: FormularioEventoProps) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const hoy = new Date().toISOString().split("T")[0];
 
   const manejarEnvio = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-    setCargando(true);
 
     const formData = new FormData(e.currentTarget);
-    const materialRaw = formData.get("material") as string;
-    
-    // Concatenar inicio y hora
-    const fecha = formData.get("fecha") as string;
-    const hora = formData.get("hora") as string;
-    const duracionHoras = parseInt(formData.get("duracion") as string) || 1;
-    
-    const inicio = new Date(`${fecha}T${hora}:00`);
-    const fin = new Date(inicio.getTime() + duracionHoras * 3600000);
+    const campo = (nombre: string) => String(formData.get(nombre) ?? "");
 
-    const nuevo = {
-      titulo: formData.get("titulo") as string,
-      descripcion: formData.get("descripcion") as string,
-      deporte: formData.get("deporte") as Evento["deporte"],
-      nivel: formData.get("nivel") as Evento["nivel"],
-      inicio: inicio.toISOString(),
-      fin: fin.toISOString(),
-      lugar: {
-        nombre: formData.get("lugar_nombre") as string,
-        puntoEncuentro: formData.get("lugar_punto_encuentro") as string,
-        municipio: formData.get("lugar_municipio") as string,
-        direccion: formData.get("lugar_direccion") as string,
-        lat: 40.4168,
-        lng: -3.7038
-      },
-      aforoMaximo: parseInt(formData.get("aforoMaximo") as string, 10),
-      material: materialRaw ? materialRaw.split(",").map(i => i.trim()).filter(Boolean) : [],
-      organizadorId: import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010",
-      communityGroupId: null,
-      routineId: null
-    };
+    let nuevo: PayloadCreacionEvento;
+    try {
+      nuevo = construirPayloadCreacion({
+        titulo: campo("titulo"),
+        descripcion: campo("descripcion"),
+        deporte: campo("deporte") as Evento["deporte"],
+        nivel: campo("nivel") as Evento["nivel"],
+        fecha: campo("fecha"),
+        hora: campo("hora"),
+        duracion: campo("duracion"),
+        lugarNombre: campo("lugar_nombre"),
+        lugarPuntoEncuentro: campo("lugar_punto_encuentro"),
+        lugarMunicipio: campo("lugar_municipio"),
+        lugarDireccion: campo("lugar_direccion"),
+        aforoMaximo: campo("aforoMaximo"),
+        aforoMinimo: campo("aforoMinimo"),
+        fechaLimite: campo("fechaLimite"),
+        horaLimite: campo("horaLimite"),
+        material: campo("material"),
+        organizadorId: import.meta.env.VITE_DEMO_USER_ID ?? "usr_mock_010",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Revisa los datos introducidos.");
+      return;
+    }
 
+    setCargando(true);
     try {
       const eventoCreado = await crearEvento(nuevo);
       onCreado(eventoCreado);
@@ -187,9 +266,25 @@ export function FormularioEvento({ onCreado, onCancelar }: FormularioEventoProps
             <input required name="aforoMaximo" type="number" min="1" className="filtro" style={{ width: '100%', padding: '8px' }} placeholder="10" />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Material necesario (separado por comas)</label>
-            <input name="material" type="text" className="filtro" style={{ width: '100%', padding: '8px' }} placeholder="Ej: Esterilla, Toalla" />
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Aforo mínimo (opcional)</label>
+            <input name="aforoMinimo" type="number" min="1" step="1" className="filtro" style={{ width: '100%', padding: '8px' }} placeholder="Ej: 10 jugadores" />
           </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Fecha límite de inscripción (opcional)</label>
+            <input name="fechaLimite" type="date" min={hoy} className="filtro" style={{ width: '100%', padding: '8px' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Hora límite de inscripción (opcional)</label>
+            <input name="horaLimite" type="time" className="filtro" style={{ width: '100%', padding: '8px' }} />
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Material necesario (separado por comas)</label>
+          <input name="material" type="text" className="filtro" style={{ width: '100%', padding: '8px' }} placeholder="Ej: Esterilla, Toalla" />
         </div>
 
         <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>

@@ -93,6 +93,13 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar, errorInicia
     e.preventDefault();
     const datos = new FormData(e.currentTarget);
     const texto = (campo: string) => String(datos.get(campo) ?? "");
+    const fechaLimite = texto("fechaLimite").trim();
+    const horaLimite = texto("horaLimite").trim();
+    if (fechaLimite !== "" && horaLimite === "") {
+      setErrorGuardado({ tipo: "general", mensaje: "Indica también la hora límite de inscripción." });
+      return;
+    }
+
     const cambios = cambiosDesdeFormulario({
       ...inicial,
       titulo: texto("titulo"),
@@ -100,10 +107,13 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar, errorInicia
       fecha: texto("fecha"),
       horaInicio: texto("horaInicio"),
       horaFin: texto("horaFin"),
+      fechaLimite,
+      horaLimite,
       puntoEncuentro: texto("puntoEncuentro"),
       nivel: texto("nivel") as Nivel,
       material: texto("material"),
       aforoMaximo: Number.parseInt(texto("aforoMaximo"), 10),
+      aforoMinimo: texto("aforoMinimo"),
     });
     setGuardando(true);
     setErrorGuardado(null);
@@ -166,6 +176,14 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar, errorInicia
             <span className="campo__etiqueta">Hora de fin *</span>
             <input required name="horaFin" type="time" defaultValue={inicial.horaFin} />
           </label>
+          <label className="campo">
+            <span className="campo__etiqueta">Fecha límite de inscripción</span>
+            <input name="fechaLimite" type="date" defaultValue={inicial.fechaLimite} />
+          </label>
+          <label className="campo">
+            <span className="campo__etiqueta">Hora límite de inscripción</span>
+            <input name="horaLimite" type="time" defaultValue={inicial.horaLimite} />
+          </label>
           <label className="campo campo--ancho">
             <span className="campo__etiqueta">Punto de encuentro exacto *</span>
             <input required name="puntoEncuentro" type="text" defaultValue={inicial.puntoEncuentro} />
@@ -192,6 +210,17 @@ export function CamposEdicionEvento({ evento, onGuardar, onCancelar, errorInicia
               min={Math.max(1, inicial.plazasOcupadas)}
               step={1}
               defaultValue={inicial.aforoMaximo}
+            />
+          </label>
+          <label className="campo">
+            <span className="campo__etiqueta">Aforo mínimo</span>
+            <input
+              name="aforoMinimo"
+              type="number"
+              min={1}
+              step={1}
+              defaultValue={inicial.aforoMinimo}
+              placeholder="Opcional"
             />
           </label>
           <label className="campo campo--solo-lectura">
