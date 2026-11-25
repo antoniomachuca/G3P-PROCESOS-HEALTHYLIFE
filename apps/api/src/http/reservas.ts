@@ -15,7 +15,12 @@ import { manejarEventosUsuario } from "./eventos-usuario.ts";
 
 const ORIGEN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
-export function manejarReservas(store: EventStore, req: IncomingMessage, res: ServerResponse): void {
+export function manejarReservas(
+  store: EventStore,
+  req: IncomingMessage,
+  res: ServerResponse,
+  ahora: Date = new Date(),
+): void {
   aplicarCors(req, res);
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -43,7 +48,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
       return;
     }
     const campus = url.searchParams.get("campus")?.trim() ?? "";
-    const activos = eventosActivos(store.listarEventos());
+    const activos = eventosActivos(store.listarEventos(), ahora);
     const eventos = filtrarCatalogo(activos, { deporte, nivel, campus });
     responder(res, 200, { eventos });
     return;
@@ -63,7 +68,10 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
         .filter((reserva) => reserva.estado === "confirmada" || reserva.estado === "asistida")
         .map((reserva) => reserva.eventoId),
     );
-    const eventos = actividadesHistoricas(store.listarEventos().filter((evento) => eventosParticipados.has(evento.id)));
+    const eventos = actividadesHistoricas(
+      store.listarEventos().filter((evento) => eventosParticipados.has(evento.id)),
+      ahora,
+    );
     responder(res, 200, { eventos });
     return;
   }
@@ -75,7 +83,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
       responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
       return;
     }
-    responder(res, 200, { eventos: actividadesProximas(store.listarEventosPorUsuario(usuarioId)) });
+    responder(res, 200, { eventos: actividadesProximas(store.listarEventosPorUsuario(usuarioId), ahora) });
     return;
   }
 
@@ -100,7 +108,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
         const payload = JSON.parse(body);
         
         // Validación de fecha futura requerida por HU-07
-        if (Date.parse(payload.inicio) < Date.now()) {
+        if (Date.parse(payload.inicio) < ahora.getTime()) {
           responder(res, 400, { mensaje: "La fecha del evento debe ser futura" });
           return;
         }
@@ -120,7 +128,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
           typeof fechaLimiteInscripcion === "string" &&
           ISO_CON_OFFSET.test(fechaLimiteInscripcion) &&
           !Number.isNaN(Date.parse(fechaLimiteInscripcion)) &&
-          Date.parse(fechaLimiteInscripcion) <= Date.now()
+          Date.parse(fechaLimiteInscripcion) <= ahora.getTime()
         ) {
           responder(res, 400, { mensaje: "La fecha límite de inscripción debe ser futura" });
           return;
@@ -165,7 +173,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
         return;
       }
       try {
-        responder(res, 200, store.actualizarEvento(eventoId, cuerpo, usuarioId));
+        responder(res, 200, store.actualizarEvento(eventoId, cuerpo, usuarioId, ahora));
       } catch (error) {
         manejarErrorEdicion(res, error);
       }
@@ -192,7 +200,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
     }
 
     try {
-      const resultado = store.reservar(rutaReserva.eventoId, usuarioId);
+      const resultado = store.reservar(rutaReserva.eventoId, usuarioId, ahora);
       responder(res, 201, {
         id: resultado.reserva.id,
         eventoId: resultado.reserva.eventoId,
@@ -215,9 +223,9 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
       if (rutaReserva.tipo === "reserva_directa" || (rutaReserva.tipo === "evento_reservas" && rutaReserva.reservaId)) {
         const idAUsar = rutaReserva.reservaId!;
         if (store.cancelarReservaPorId) {
-          resultado = store.cancelarReservaPorId(idAUsar, usuarioId || undefined);
+          resultado = store.cancelarReservaPorId(idAUsar, usuarioId || undefined, ahora);
         } else if (rutaReserva.tipo === "evento_reservas") {
-          resultado = store.cancelarReserva(rutaReserva.eventoId, usuarioId);
+          resultado = store.cancelarReserva(rutaReserva.eventoId, usuarioId, ahora);
         } else {
           responder(res, 501, { mensaje: "Operación no soportada por el almacén" });
           return;
@@ -227,7 +235,7 @@ export function manejarReservas(store: EventStore, req: IncomingMessage, res: Se
           responder(res, 400, { mensaje: "Falta la cabecera X-User-Id" });
           return;
         }
-        resultado = store.cancelarReserva(rutaReserva.eventoId, usuarioId);
+        resultado = store.cancelarReserva(rutaReserva.eventoId, usuarioId, ahora);
       }
 
       responder(res, 200, {
@@ -275,7 +283,7 @@ function manejarErrorReserva(res: ServerResponse, error: unknown, fallbackMensaj
     let status = 400;
     if (error.codigo === "no_encontrado") status = 404;
     else if (error.codigo === "duplicada" || error.codigo === "ya_cancelada") status = 409;
-    else if (error.codigo === "evento_iniciado") status = 400;
+    else if (error.codigo === "evento_iniciado" || error.codigo === "inscripcion_cerrada") status = 400;
     else if (error.codigo === "usuario_invalido") status = 400;
     responder(res, status, { mensaje: error.message });
     return;

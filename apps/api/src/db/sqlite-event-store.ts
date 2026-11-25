@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import type { EventStore, ResultadoCancelacion, ResultadoReserva } from "../domain/event-store.ts";
 import { fechaIsoConOffset } from "../domain/fecha.ts";
-import { assertEvento, assertReserva, type Evento, type Reserva } from "../domain/modelo.ts";
+import { assertEvento, assertReserva, inscripcionCerradaPorLimite, type Evento, type Reserva } from "../domain/modelo.ts";
 import { ErrorDeReserva } from "../domain/errores-reserva.ts";
 import { asegurarOrganizador, ErrorDeEdicion, validarCambiosEvento } from "../domain/edicion-evento.ts";
 
@@ -250,7 +250,7 @@ export class SqliteEventStore implements EventStore {
     }
   }
 
-  reservar(eventoId: string, usuarioId: string): ResultadoReserva {
+  reservar(eventoId: string, usuarioId: string, ahora: Date = new Date()): ResultadoReserva {
     const usuario = usuarioId.trim();
     if (usuario.length === 0) {
       throw new ErrorDeReserva("usuario_invalido", "El usuario de la reserva es obligatorio");
@@ -261,7 +261,7 @@ export class SqliteEventStore implements EventStore {
       eventoId,
       usuarioId: usuario,
       estado: "en_espera",
-      creadaEn: fechaIsoConOffset(),
+      creadaEn: fechaIsoConOffset(ahora),
     };
 
     this.db.exec("BEGIN IMMEDIATE");
@@ -270,8 +270,14 @@ export class SqliteEventStore implements EventStore {
       if (!evento) {
         throw new ErrorDeReserva("no_encontrado", "No existe ese evento");
       }
-      if (!admiteReserva(evento)) {
+      if (!admiteReserva(evento, ahora)) {
         throw new ErrorDeReserva("no_reservable", "Este evento no admite reservas");
+      }
+      if (inscripcionCerradaPorLimite(evento, ahora)) {
+        throw new ErrorDeReserva(
+          "inscripcion_cerrada",
+          "El plazo de inscripción ha finalizado y el evento está cerrado",
+        );
       }
 
       const yaActiva = this.db
@@ -318,7 +324,7 @@ export class SqliteEventStore implements EventStore {
     return row ? reservaDesdeFila(row) : undefined;
   }
 
-  cancelarReserva(eventoId: string, usuarioId: string): ResultadoCancelacion {
+  cancelarReserva(eventoId: string, usuarioId: string, ahora: Date = new Date()): ResultadoCancelacion {
     const usuario = usuarioId.trim();
     if (usuario.length === 0) {
       throw new ErrorDeReserva("usuario_invalido", "El usuario de la reserva es obligatorio");
@@ -332,10 +338,16 @@ export class SqliteEventStore implements EventStore {
       }
 
       const inicio = Date.parse(evento.inicio);
-      if (Number.isFinite(inicio) && Date.now() >= inicio) {
+      if (Number.isFinite(inicio) && ahora.getTime() >= inicio) {
         throw new ErrorDeReserva(
           "evento_iniciado",
           "No se puede cancelar una inscripción de un evento que ya ha comenzado",
+        );
+      }
+      if (inscripcionCerradaPorLimite(evento, ahora)) {
+        throw new ErrorDeReserva(
+          "inscripcion_cerrada",
+          "El plazo límite de inscripción ha pasado; no se permiten cancelaciones directas",
         );
       }
 
@@ -403,7 +415,7 @@ export class SqliteEventStore implements EventStore {
     }
   }
 
-  cancelarReservaPorId(reservaId: string, usuarioId?: string): ResultadoCancelacion {
+  cancelarReservaPorId(reservaId: string, usuarioId?: string, ahora: Date = new Date()): ResultadoCancelacion {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const row = this.db
@@ -432,10 +444,16 @@ export class SqliteEventStore implements EventStore {
       }
 
       const inicio = Date.parse(evento.inicio);
-      if (Number.isFinite(inicio) && Date.now() >= inicio) {
+      if (Number.isFinite(inicio) && ahora.getTime() >= inicio) {
         throw new ErrorDeReserva(
           "evento_iniciado",
           "No se puede cancelar una inscripción de un evento que ya ha comenzado",
+        );
+      }
+      if (inscripcionCerradaPorLimite(evento, ahora)) {
+        throw new ErrorDeReserva(
+          "inscripcion_cerrada",
+          "El plazo límite de inscripción ha pasado; no se permiten cancelaciones directas",
         );
       }
 
@@ -478,10 +496,10 @@ export class SqliteEventStore implements EventStore {
   }
 }
 
-function admiteReserva(evento: Evento): boolean {
+function admiteReserva(evento: Evento, ahora: Date = new Date()): boolean {
   if (evento.estado !== "abierta") {
     return false;
   }
   const fin = Date.parse(evento.fin);
-  return Number.isFinite(fin) && fin > Date.now();
+  return Number.isFinite(fin) && fin > ahora.getTime();
 }

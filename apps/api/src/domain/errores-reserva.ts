@@ -1,6 +1,7 @@
 export type CodigoErrorReserva =
   | "no_encontrado"
   | "no_reservable"
+  | "inscripcion_cerrada"
   | "duplicada"
   | "usuario_invalido"
   | "evento_iniciado"

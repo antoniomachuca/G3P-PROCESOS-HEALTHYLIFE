@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { FormularioEvento, construirPayloadCreacion, type DatosFormularioCreacion } from "../src/FormularioEvento";
+import { inscripcionCerrada } from "../src/cancelacion";
+import { BotonCancelarInscripcion } from "../src/components/BotonCancelarInscripcion";
 import { CamposEdicionEvento } from "../src/components/FormularioEdicionEvento";
+import { TarjetaEvento } from "../src/components/TarjetaEvento";
 import { cambiosDesdeFormulario, cuerpoActualizacion, valoresFormularioEdicion } from "../src/edicion";
 import type { Evento } from "../src/tipos";
 
@@ -153,5 +156,42 @@ describe("HU-11 / G3P-97: precarga y actualización en edición", () => {
       aforoMinimo: null,
       fechaLimiteInscripcion: null,
     });
+  });
+});
+
+describe("HU-11 / G3P-98: cierre visual al superar la hora límite", () => {
+  const ANTES_LIMITE = new Date("2026-10-20T18:00:00+02:00");
+  const DESPUES_LIMITE = new Date("2026-10-20T18:35:00+02:00");
+
+  it("inscripcionCerrada detecta correctamente el umbral y devuelve false sin fecha límite", () => {
+    assert.equal(inscripcionCerrada(null, DESPUES_LIMITE), false);
+    assert.equal(inscripcionCerrada(EVENTO_CON_LIMITE.fechaLimiteInscripcion, ANTES_LIMITE), false);
+    assert.equal(inscripcionCerrada(EVENTO_CON_LIMITE.fechaLimiteInscripcion, DESPUES_LIMITE), true);
+  });
+
+  it("deshabilita la reserva y muestra 'Inscripción cerrada' en TarjetaEvento tras el límite", () => {
+    const html = renderToString(
+      React.createElement(TarjetaEvento, {
+        evento: EVENTO_CON_LIMITE,
+        tieneReserva: false,
+        fechaReferencia: DESPUES_LIMITE,
+      }),
+    );
+    assert.match(html, /Inscripción cerrada/);
+    assert.match(html, /disabled=""/);
+  });
+
+  it("deshabilita la cancelación directa con aviso tras el límite aunque el evento no haya empezado", () => {
+    const html = renderToString(
+      React.createElement(BotonCancelarInscripcion, {
+        eventoId: EVENTO_CON_LIMITE.id,
+        inicioIso: EVENTO_CON_LIMITE.inicio,
+        fechaLimiteInscripcion: EVENTO_CON_LIMITE.fechaLimiteInscripcion,
+        tituloEvento: EVENTO_CON_LIMITE.titulo,
+        fechaReferencia: DESPUES_LIMITE,
+      }),
+    );
+    assert.match(html, /disabled=""/);
+    assert.match(html, /Plazo de inscripción cerrado: no se permiten cancelaciones directas/);
   });
 });

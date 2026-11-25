@@ -114,7 +114,7 @@ HU-21 (G3P-46): `GET /api/v1/me/events/history` devuelve `{ "eventos": [...] }` 
 curl http://127.0.0.1:3001/api/v1/me/events/history -H 'X-User-Id: usr_mock_010'
 ```
 
-HU-11 (G3P-22 / G3P-97): el modelo, la migración SQLite (`002_aforo_minimo_y_fecha_limite.sql`), el contrato (`contracts/eventos.ejemplo.json`), la API (`POST`/`GET`/`PATCH /api/v1/events`) y los formularios de publicación y edición admiten los campos opcionales `aforoMinimo` (entero `>= 1` y `<= aforoMaximo`) y `fechaLimiteInscripcion` (ISO-8601 con offset anterior al `inicio` del evento).
+HU-11 (G3P-22 / G3P-97 / G3P-98): el modelo, la migración SQLite (`002_aforo_minimo_y_fecha_limite.sql`), el contrato (`contracts/eventos.ejemplo.json`), la API (`POST`/`GET`/`PATCH /api/v1/events`) y los formularios de publicación y edición admiten los campos opcionales `aforoMinimo` (entero `>= 1` y `<= aforoMaximo`) y `fechaLimiteInscripcion` (ISO-8601 con offset anterior al `inicio` del evento). Al alcanzarse o superarse `fechaLimiteInscripcion`, el evento cierra automáticamente nuevas inscripciones (`POST .../reservations`) y cancelaciones directas (`DELETE`/`PATCH .../reservations`), respondiendo `400` en español e inhabilitando ambas acciones en la interfaz web.
 
 G3P-33 deja el modelo en SQLite y G3P-34 el `POST /api/v1/events/{id}/reservations` con la transacción que evita el sobrecupo. G3P-18 incorpora el formulario de alta de actividades. El catálogo, las reservas y el alta web consumen esa API; la demo completa se levanta con Docker Compose.
 

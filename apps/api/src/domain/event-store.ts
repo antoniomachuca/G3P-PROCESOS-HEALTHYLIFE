@@ -17,9 +17,9 @@ export interface EventStore {
   guardarReserva(reserva: Reserva): void;
   obtenerReserva?(id: string): Reserva | undefined;
   listarReservas(eventoId: string): Reserva[];
-  reservar(eventoId: string, usuarioId: string): ResultadoReserva;
-  cancelarReserva(eventoId: string, usuarioId: string): ResultadoCancelacion;
-  cancelarReservaPorId?(reservaId: string, usuarioId?: string): ResultadoCancelacion;
+  reservar(eventoId: string, usuarioId: string, ahora?: Date): ResultadoReserva;
+  cancelarReserva(eventoId: string, usuarioId: string, ahora?: Date): ResultadoCancelacion;
+  cancelarReservaPorId?(reservaId: string, usuarioId?: string, ahora?: Date): ResultadoCancelacion;
   listarEventosPorUsuario(usuarioId: string): Evento[];
   listarReservasPorUsuario(usuarioId: string): Reserva[];
   /** Aplica cambios validados en una transacción y devuelve el evento actualizado. Solo el organizador puede hacerlo. */

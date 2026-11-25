@@ -165,3 +165,80 @@ test("G3P-97: PATCH /api/v1/events/{id} actualiza, valida y permite limpiar afor
     assert.equal(limpio.fechaLimiteInscripcion, null);
   });
 });
+
+// HU-11 / G3P-98: cierre automático al superar la hora límite (sin inscripciones ni cancelaciones directas).
+
+test("G3P-98: superada la hora límite de inscripción, rechaza nuevas reservas y cancelaciones directas en API y SQLite", async () => {
+  const store = crearAlmacen();
+  const eventoCerrado: Evento = {
+    id: "evt_limite_pasado",
+    titulo: "Fútbol sala cerrado por límite",
+    deporte: "futbol",
+    nivel: "intermedio",
+    descripcion: "El partido aún no empezó pero cerró su plazo de inscripción",
+    inicio: new Date(Date.now() + 2 * 3_600_000).toISOString(),
+    fin: new Date(Date.now() + 3 * 3_600_000).toISOString(),
+    lugar: {
+      nombre: "Pabellón cubierto",
+      puntoEncuentro: "Puerta principal",
+      municipio: "Vicálvaro",
+      direccion: "Campus de Vicálvaro",
+      lat: 40.4058,
+      lng: -3.6083,
+    },
+    aforoMaximo: 14,
+    plazasDisponibles: 4,
+    aforoMinimo: 10,
+    fechaLimiteInscripcion: new Date(Date.now() - 10 * 60_000).toISOString(),
+    material: ["Botas"],
+    estado: "abierta",
+    organizadorId: "usr_mock_010",
+    communityGroupId: null,
+    routineId: null,
+  };
+  store.guardarEvento(eventoCerrado);
+  store.guardarReserva({
+    id: "ins_previa_001",
+    eventoId: eventoCerrado.id,
+    usuarioId: "usr_mock_020",
+    estado: "confirmada",
+    creadaEn: new Date(Date.now() - 60 * 60_000).toISOString(),
+  });
+
+  await conServidor(store, async (base) => {
+    // Intento de nueva inscripción tras superar el límite
+    const resReserva = await fetch(`${base}/api/v1/events/${eventoCerrado.id}/reservations`, {
+      method: "POST",
+      headers: { "X-User-Id": "usr_mock_030" },
+    });
+    assert.equal(resReserva.status, 400);
+    assert.deepEqual(await resReserva.json(), {
+      mensaje: "El plazo de inscripción ha finalizado y el evento está cerrado",
+    });
+
+    // Intento de cancelación directa por evento tras superar el límite
+    const resCancelEvento = await fetch(`${base}/api/v1/events/${eventoCerrado.id}/reservations`, {
+      method: "DELETE",
+      headers: { "X-User-Id": "usr_mock_020" },
+    });
+    assert.equal(resCancelEvento.status, 400);
+    assert.deepEqual(await resCancelEvento.json(), {
+      mensaje: "El plazo límite de inscripción ha pasado; no se permiten cancelaciones directas",
+    });
+
+    // Intento de cancelación directa por id de reserva tras superar el límite
+    const resCancelId = await fetch(`${base}/api/v1/reservations/ins_previa_001`, {
+      method: "DELETE",
+      headers: { "X-User-Id": "usr_mock_020" },
+    });
+    assert.equal(resCancelId.status, 400);
+    assert.deepEqual(await resCancelId.json(), {
+      mensaje: "El plazo límite de inscripción ha pasado; no se permiten cancelaciones directas",
+    });
+  });
+
+  // La base de datos permanece intacta
+  assert.equal(store.obtenerEvento(eventoCerrado.id)?.plazasDisponibles, 4);
+  assert.equal(store.obtenerReserva("ins_previa_001")?.estado, "confirmada");
+  assert.equal(store.listarReservas(eventoCerrado.id).length, 1);
+});

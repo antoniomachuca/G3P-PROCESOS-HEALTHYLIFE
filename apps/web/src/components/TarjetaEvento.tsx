@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { EstadoReserva, Evento } from '../tipos';
+import { inscripcionCerrada } from '../cancelacion';
 import { NOMBRE_DEPORTE, estadoPlazas, fechaHora, textoCupo, textoInsignia } from '../formato';
 import { IconoCalendario, IconoLugar, IconoReserva } from './Iconos';
 import { BotonCancelarInscripcion } from './BotonCancelarInscripcion';
@@ -30,6 +31,7 @@ export function TarjetaEvento({
   const ocupadas = evento.aforoMaximo - evento.plazasDisponibles;
   const porcentaje = Math.min(100, Math.max(0, Math.round((ocupadas / evento.aforoMaximo) * 100)));
   const usuarioInscrito = Boolean(tieneReserva || estadoReserva);
+  const cerrada = inscripcionCerrada(evento.fechaLimiteInscripcion, fechaReferencia);
 
   return (
     <article className="tarjeta">
@@ -87,6 +89,7 @@ export function TarjetaEvento({
           <BotonCancelarInscripcion
             eventoId={evento.id}
             inicioIso={evento.inicio}
+            fechaLimiteInscripcion={evento.fechaLimiteInscripcion}
             tituloEvento={evento.titulo}
             onConfirmarCancelacion={onConfirmarCancelacion}
             fechaReferencia={fechaReferencia}
@@ -104,10 +107,10 @@ export function TarjetaEvento({
               type="button"
               className="boton boton--primario"
               onClick={onReservar}
-              disabled={reservando || evento.plazasDisponibles <= 0}
+              disabled={reservando || evento.plazasDisponibles <= 0 || cerrada}
             >
               <IconoReserva />
-              <span>{reservando ? 'Reservando...' : 'Reservar'}</span>
+              <span>{reservando ? 'Reservando...' : cerrada ? 'Inscripción cerrada' : 'Reservar'}</span>
             </button>
           </>
         )}

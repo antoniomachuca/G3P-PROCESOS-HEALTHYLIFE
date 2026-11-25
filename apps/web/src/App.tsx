@@ -13,6 +13,7 @@ import {
   filtrarEventosCatalogo,
 } from "./formato";
 import { FormularioEvento } from "./FormularioEvento";
+import { inscripcionCerrada } from "./cancelacion";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
 import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
 import { PanelAccionesEvento } from "./components/PanelAccionesEvento";
@@ -87,7 +88,14 @@ function App() {
   }, [aviso]);
 
   async function gestionarReserva(evento: Evento) {
-    if (reservandoId || evento.plazasDisponibles <= 0 || reservas[evento.id]) return;
+    if (
+      reservandoId ||
+      evento.plazasDisponibles <= 0 ||
+      reservas[evento.id] ||
+      inscripcionCerrada(evento.fechaLimiteInscripcion)
+    ) {
+      return;
+    }
     setReservandoId(evento.id);
     setAviso(null);
 
@@ -295,11 +303,16 @@ function App() {
                   <BotonCancelarInscripcion
                     eventoId={eventoSeleccionado.id}
                     inicioIso={eventoSeleccionado.inicio}
+                    fechaLimiteInscripcion={eventoSeleccionado.fechaLimiteInscripcion}
                     tituloEvento={eventoSeleccionado.titulo}
                     onConfirmarCancelacion={gestionarCancelacion}
                   />
                 )}
-                <p className="nota-reserva">La confirmación se realiza en el momento.</p>
+                <p className="nota-reserva">
+                  {inscripcionCerrada(eventoSeleccionado.fechaLimiteInscripcion)
+                    ? "Inscripción cerrada: se ha superado la hora límite y no se admiten altas ni cancelaciones directas."
+                    : "La confirmación se realiza en el momento."}
+                </p>
               </aside>
             </PanelAccionesEvento>
 
@@ -470,18 +483,26 @@ function BotonReserva({
 }) {
   const sinPlazas = evento.plazasDisponibles <= 0;
   const inscrito = Boolean(estadoReserva);
+  const cerrada = inscripcionCerrada(evento.fechaLimiteInscripcion);
   const texto = reservando
     ? "Reservando..."
     : estadoReserva === "confirmada"
       ? "Plaza confirmada"
       : estadoReserva === "en_espera"
         ? "En lista de espera"
-        : sinPlazas
-          ? "Aforo completo"
-          : "Reservar plaza";
+        : cerrada
+          ? "Inscripción cerrada"
+          : sinPlazas
+            ? "Aforo completo"
+            : "Reservar plaza";
 
   return (
-    <button className="boton boton--primario boton--reserva" type="button" onClick={onReservar} disabled={reservando || sinPlazas || inscrito}>
+    <button
+      className="boton boton--primario boton--reserva"
+      type="button"
+      onClick={onReservar}
+      disabled={reservando || sinPlazas || inscrito || cerrada}
+    >
       {texto}
     </button>
   );
@@ -531,6 +552,7 @@ function TarjetaEvento({
           <BotonCancelarInscripcion
             eventoId={evento.id}
             inicioIso={evento.inicio}
+            fechaLimiteInscripcion={evento.fechaLimiteInscripcion}
             tituloEvento={evento.titulo}
             onConfirmarCancelacion={onConfirmarCancelacion}
           />

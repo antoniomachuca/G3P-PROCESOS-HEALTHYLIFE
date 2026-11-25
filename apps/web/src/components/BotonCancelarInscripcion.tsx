@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { eventoYaIniciado } from '../cancelacion';
+import { eventoYaIniciado, inscripcionCerrada } from '../cancelacion';
 import { ModalConfirmacionCancelacion } from './ModalConfirmacionCancelacion';
 
 export type BotonCancelarInscripcionProps = {
   eventoId: string;
   inicioIso: string;
+  fechaLimiteInscripcion?: string | null;
   tituloEvento: string;
   onConfirmarCancelacion?: (eventoId: string) => void;
   fechaReferencia?: Date | number;
@@ -13,13 +14,15 @@ export type BotonCancelarInscripcionProps = {
 };
 
 /**
- * Botón para cancelar inscripción en un evento con verificación visual por fecha (G3P-59).
- * - Si el evento ya ha comenzado, se muestra inhabilitado (disabled) y con aviso explicativo.
- * - Si el evento está en el futuro, abre un modal de confirmación para evitar pulsaciones accidentales.
+ * Botón para cancelar inscripción en un evento con verificación visual por fecha (G3P-59 / G3P-98).
+ * - Si el evento ya ha comenzado o se ha superado la hora límite de inscripción,
+ *   se muestra inhabilitado (disabled) y con aviso explicativo.
+ * - En caso contrario, abre un modal de confirmación para evitar pulsaciones accidentales.
  */
 export function BotonCancelarInscripcion({
   eventoId,
   inicioIso,
+  fechaLimiteInscripcion,
   tituloEvento,
   onConfirmarCancelacion,
   fechaReferencia,
@@ -28,9 +31,11 @@ export function BotonCancelarInscripcion({
 }: BotonCancelarInscripcionProps) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const yaIniciado = eventoYaIniciado(inicioIso, fechaReferencia);
+  const plazoCerrado = !yaIniciado && inscripcionCerrada(fechaLimiteInscripcion, fechaReferencia);
+  const bloqueado = yaIniciado || plazoCerrado;
 
   function manejarClick() {
-    if (yaIniciado) return;
+    if (bloqueado) return;
     setModalAbierto(true);
   }
 
@@ -46,23 +51,25 @@ export function BotonCancelarInscripcion({
   }
 
   const clasesBoton = `boton boton--cancelar ${className}`.trim();
-  const mensajeBloqueo = 'No es posible cancelar una actividad ya iniciada';
+  const mensajeBloqueo = yaIniciado
+    ? 'No es posible cancelar una actividad ya iniciada'
+    : 'Plazo de inscripción cerrado: no se permiten cancelaciones directas';
 
   return (
     <div className="cancelar-contenedor">
       <button
         type="button"
         className={clasesBoton}
-        disabled={yaIniciado}
-        aria-disabled={yaIniciado}
-        title={yaIniciado ? mensajeBloqueo : undefined}
-        aria-label={yaIniciado ? mensajeBloqueo : textoBoton}
+        disabled={bloqueado}
+        aria-disabled={bloqueado}
+        title={bloqueado ? mensajeBloqueo : undefined}
+        aria-label={bloqueado ? mensajeBloqueo : textoBoton}
         onClick={manejarClick}
       >
         {textoBoton}
       </button>
 
-      {yaIniciado && (
+      {bloqueado && (
         <span className="cancelar-aviso-bloqueo" role="status">
           <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path

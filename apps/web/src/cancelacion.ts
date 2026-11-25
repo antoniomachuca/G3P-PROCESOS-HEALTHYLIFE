@@ -27,3 +27,21 @@ export function eventoYaIniciado(
 
   return ahoraMs >= inicioMs;
 }
+
+/**
+ * HU-11 / G3P-98: comprueba si el reloj ha alcanzado o superado la hora límite
+ * de inscripción fijada para el evento. Si no tiene fecha límite, devuelve false.
+ */
+export function inscripcionCerrada(
+  fechaLimiteInscripcion?: string | null,
+  fechaReferencia: Date | number = Date.now(),
+): boolean {
+  if (!fechaLimiteInscripcion) return false;
+  const limiteMs = Date.parse(fechaLimiteInscripcion);
+  if (!Number.isFinite(limiteMs)) return false;
+
+  const ahoraMs =
+    fechaReferencia instanceof Date ? fechaReferencia.getTime() : fechaReferencia;
+
+  return ahoraMs >= limiteMs;
+}

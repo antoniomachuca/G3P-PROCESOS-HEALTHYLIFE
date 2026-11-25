@@ -45,6 +45,21 @@ export type Evento = {
 /** ISO-8601 con offset obligatorio (p. ej. 2026-10-18T10:00:00+02:00 o Z). */
 export const ISO_CON_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?([+-]\d{2}:\d{2}|Z)$/;
 
+/**
+ * HU-11 / G3P-98: comprueba si el reloj ha alcanzado o superado la hora límite de inscripción fijada.
+ * Cuando es true, el evento queda cerrado a nuevas inscripciones y a cancelaciones directas.
+ */
+export function inscripcionCerradaPorLimite(
+  evento: Pick<Evento, "fechaLimiteInscripcion">,
+  ahora: Date = new Date(),
+): boolean {
+  if (!evento.fechaLimiteInscripcion) {
+    return false;
+  }
+  const limiteMs = Date.parse(evento.fechaLimiteInscripcion);
+  return Number.isFinite(limiteMs) && ahora.getTime() >= limiteMs;
+}
+
 export type Reserva = {
   id: string;
   eventoId: string;
