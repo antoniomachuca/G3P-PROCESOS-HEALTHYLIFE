@@ -105,7 +105,8 @@ h1, h2, h3, p { margin-top: 0; }
 .ocupacion__texto span { color: var(--muted); }
 .barra-aforo { height: 6px; overflow: hidden; background: #e8e8e8; }
 .barra-aforo span { display: block; height: 100%; background: var(--urjc-red); transition: width 250ms ease; }
-.tarjeta-evento__acciones { display: grid; grid-template-columns: 0.9fr 1.2fr; gap: 8px; padding: 0 16px 16px; }
+.tarjeta-evento__acciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 8px; padding: 0 16px 16px; }
+.tarjeta-evento__acciones .boton { width: 100%; height: 44px; margin-top: 0; padding: 6px 10px; line-height: 1.15; text-align: center; }
 .boton { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; border: 1px solid transparent; border-radius: 4px; font-size: 14px; font-weight: 700; transition: background 150ms ease, border-color 150ms ease; }
 .boton--primario { background: var(--urjc-red); color: var(--urjc-white); }
 .boton--primario:hover:not(:disabled) { background: #bd0018; }
@@ -207,7 +208,8 @@ h1, h2, h3, p { margin-top: 0; }
 .cupo__relleno--ultimas { background: var(--aviso); }
 .cupo__relleno--completa { background: #94a3b8; }
 
-.tarjeta__acciones { display: flex; gap: 0.625rem; padding: 0 1.25rem 1.25rem; }
+.tarjeta__acciones { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0 1.25rem 1.25rem; }
+.tarjeta__acciones > .boton { flex: 1; height: 44px; }
 .boton--auto { flex: none; padding: 0.625rem 1.25rem; }
 
 .mensaje { margin: 0; padding: 2rem 1.25rem; max-width: 36rem; background: var(--superficie); border: 1px solid var(--borde); border-radius: 1rem; color: var(--texto); }
