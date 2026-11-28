@@ -424,3 +424,19 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   color: var(--urjc-black);
   font-size: 14px;
 }
+
+/* HU-09 / G3P-80: cancelación motivada de una actividad por su organizador */
+.ficha-titulo__acciones { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+.cancelar-contenedor--evento { width: auto; max-width: 280px; }
+.cancelar-contenedor--evento .boton--cancelar { width: auto; }
+.modal-dialogo--ancho { max-width: 540px; }
+.motivos-cancelacion { display: grid; gap: 8px; margin: 0 0 16px; padding: 0; border: 0; }
+.motivo-opcion { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 14px; }
+.motivo-opcion input { accent-color: var(--urjc-red); }
+.motivo-opcion--activa { border-color: var(--urjc-red); }
+.campo__ayuda { justify-self: end; color: var(--muted); font-size: 12px; }
+.resumen-cancelacion__motivo { display: grid; gap: 4px; margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid var(--urjc-red); background: var(--surface-soft); }
+.resumen-cancelacion__motivo span { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.resumen-cancelacion__efectos { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.modal-dialogo__error { margin: 0 0 16px; padding: 10px 12px; border: 1px solid var(--urjc-red); border-radius: 4px; color: var(--urjc-black); font-size: 14px; }
+.modal-dialogo .campo { margin-bottom: 20px; }

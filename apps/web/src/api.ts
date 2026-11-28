@@ -50,6 +50,34 @@ export async function actualizarEvento(eventoId: string, cuerpo: CuerpoActualiza
   return datos as Evento;
 }
 
+/**
+ * HU-09 / G3P-80: el organizador cancela una actividad indicando el motivo.
+ * Contrato que implementa G3P-81: POST /api/v1/events/{id}/cancel con { motivo } y X-User-Id.
+ * Responde el evento con estado «cancelada».
+ */
+export async function cancelarEvento(eventoId: string, motivo: string, usuarioId: string): Promise<Evento> {
+  const respuesta = await fetch(`/api/v1/events/${encodeURIComponent(eventoId)}/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-User-Id": usuarioId },
+    body: JSON.stringify({ motivo }),
+  });
+  const datos = (await respuesta.json().catch(() => ({}))) as Evento | { mensaje?: string };
+  if (!respuesta.ok) {
+    const porDefecto =
+      respuesta.status === 403
+        ? "Solo el organizador de la actividad puede cancelarla."
+        : respuesta.status === 404
+          ? "El servicio de cancelación de actividades aún no está disponible."
+          : respuesta.status === 409
+            ? "La actividad ya ha finalizado o ya estaba cancelada."
+            : "No se ha podido cancelar la actividad.";
+    // Mientras G3P-81 no exista, la API responde «Ruta no encontrada»: se sustituye por un texto comprensible.
+    const mensajeApi = "mensaje" in datos && datos.mensaje && datos.mensaje !== "Ruta no encontrada" ? datos.mensaje : "";
+    throw new ApiError(respuesta.status, mensajeApi || porDefecto);
+  }
+  return datos as Evento;
+}
+
 export async function reservarPlaza(eventoId: string, usuarioId: string): Promise<ResultadoReserva> {
   const respuesta = await fetch(`/api/v1/events/${encodeURIComponent(eventoId)}/reservations`, {
     method: "POST",

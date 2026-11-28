@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, actualizarEvento, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
+import { ApiError, actualizarEvento, cancelarEvento, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
 import type { Deporte, EstadoReserva, Evento, Nivel } from "./tipos";
 import {
   DEPORTES_FILTRO,
@@ -13,6 +13,7 @@ import {
   filtrarEventosCatalogo,
 } from "./formato";
 import { FormularioEvento } from "./FormularioEvento";
+import { BotonCancelarEvento } from "./components/BotonCancelarEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
 import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
 import { PanelAccionesEvento } from "./components/PanelAccionesEvento";
@@ -153,6 +154,20 @@ function App() {
     }
   }
 
+  // HU-09 / G3P-80: el organizador cancela con motivo. Si la API falla, el error sube al modal, que sigue abierto.
+  async function gestionarCancelacionEvento(eventoId: string, motivo: string) {
+    const cancelado = await cancelarEvento(eventoId, motivo, USUARIO_DEMO);
+    // Se oculta del catálogo activo y se olvida la inscripción local: la API libera las plazas.
+    setEventos((actuales) => actuales.filter((actual) => actual.id !== eventoId));
+    setReservas((actuales) => {
+      const nuevo = { ...actuales };
+      delete nuevo[eventoId];
+      return nuevo;
+    });
+    setEventoSeleccionado(null);
+    setAviso({ tipo: "exito", texto: `Actividad «${cancelado.titulo}» cancelada. Se ha informado a los inscritos.` });
+  }
+
   const eventosFiltrados = filtrarEventosCatalogo(eventos, {
     deporte: deporteActivo,
     nivel: nivelActivo,
@@ -227,13 +242,15 @@ function App() {
               <h1>{eventoSeleccionado.titulo}</h1>
               <p>{eventoSeleccionado.descripcion}</p>
               <span className="nivel">Nivel {eventoSeleccionado.nivel}</span>
-              {!viendoHistorico && (
-                <div className="ficha-titulo__acciones">
+              <div className="ficha-titulo__acciones">
+                {!viendoHistorico && (
                   <button className="boton boton--secundario" type="button" onClick={() => setEditandoId(eventoSeleccionado.id)}>
                     Editar actividad
                   </button>
-                </div>
-              )}
+                )}
+                {/* En el histórico la actividad ya terminó: el botón sale desactivado con la razón (criterio 2 de HU-09). */}
+                <BotonCancelarEvento evento={eventoSeleccionado} onCancelar={gestionarCancelacionEvento} />
+              </div>
             </div>
           </div>
           <div className="ficha-cuerpo">
