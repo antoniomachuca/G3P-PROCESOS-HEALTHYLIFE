@@ -137,7 +137,12 @@ h1, h2, h3, p { margin-top: 0; }
 .contador-grande { display: flex; align-items: baseline; gap: 8px; margin-bottom: 13px; }
 .contador-grande strong { font-size: 42px; line-height: 1; }
 .contador-grande span { color: var(--muted); font-size: 14px; }
-.boton--reserva { width: 100%; margin-top: 18px; }
+.boton--reserva { width: 100%; }
+.reserva-control { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.reserva-panel .reserva-control { margin-top: 18px; }
+.reserva-panel .cancelar-contenedor { margin-top: 10px; }
+.tarjeta-evento__estado-reserva { padding: 0 16px 10px; }
+.tarjeta__acciones-inscrito { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .nota-reserva { margin: 11px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
 .aviso { position: fixed; right: 24px; bottom: 24px; z-index: 5; width: min(440px, calc(100vw - 32px)); display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 15px 16px; border-left: 4px solid var(--success); background: var(--urjc-white); box-shadow: 0 5px 22px #0002; animation: aparecer 180ms ease both; }
 .aviso--error { border-left-color: var(--urjc-red); }
@@ -423,4 +428,55 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   background: var(--urjc-white);
   color: var(--urjc-black);
   font-size: 14px;
+}
+
+/* HU-14 / G3P-101: botón de lista de espera e indicador de turno (Identidad URJC) */
+.boton--lista-espera {
+  background: var(--urjc-black);
+  border-color: var(--urjc-black);
+  color: var(--urjc-white);
+}
+.boton--lista-espera:hover:not(:disabled) {
+  background: var(--urjc-red);
+  border-color: var(--urjc-red);
+  color: var(--urjc-white);
+}
+
+.indicador-espera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--urjc-red);
+  border-radius: 4px;
+  background: var(--urjc-white);
+  color: var(--urjc-black);
+}
+
+.indicador-espera--compacto {
+  padding: 8px 10px;
+}
+
+.indicador-espera__estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: var(--urjc-black);
+  color: var(--urjc-white);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.indicador-espera__turno {
+  color: var(--urjc-red);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }

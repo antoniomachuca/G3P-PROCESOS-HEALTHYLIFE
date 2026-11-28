@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError, actualizarEvento, cancelarInscripcion, cargarEventos, cargarInscripcionesUsuario, reservarPlaza } from "./api";
-import type { Deporte, EstadoReserva, Evento, Nivel } from "./tipos";
+import type { Deporte, Evento, Nivel, ReservaUsuario } from "./tipos";
 import {
   DEPORTES_FILTRO,
   MENSAJE_SIN_EVENTOS_CATEGORIA,
@@ -14,6 +14,7 @@ import {
 } from "./formato";
 import { FormularioEvento } from "./FormularioEvento";
 import { BotonCancelarInscripcion } from "./components/BotonCancelarInscripcion";
+import { BotonReserva, formatearTurnoListaEspera } from "./components/BotonReserva";
 import { FormularioEdicionEvento } from "./components/FormularioEdicionEvento";
 import { PanelAccionesEvento } from "./components/PanelAccionesEvento";
 import { PanelHistorico } from "./components/PanelHistorico";
@@ -55,7 +56,7 @@ function App() {
   const [viendoMisActividades, setViendoMisActividades] = useState(false);
   const [viendoHistorico, setViendoHistorico] = useState(false);
   const [reservandoId, setReservandoId] = useState("");
-  const [reservas, setReservas] = useState<Record<string, EstadoReserva>>({});
+  const [reservas, setReservas] = useState<Record<string, ReservaUsuario>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [scrollPrevio, setScrollPrevio] = useState(0);
 
@@ -87,12 +88,16 @@ function App() {
   }, [aviso]);
 
   async function gestionarReserva(evento: Evento) {
-    if (reservandoId || evento.plazasDisponibles <= 0 || reservas[evento.id]) return;
+    if (reservandoId || reservas[evento.id]) return;
     setReservandoId(evento.id);
     setAviso(null);
 
     try {
       const resultado = await reservarPlaza(evento.id, USUARIO_DEMO);
+      const nuevaReserva: ReservaUsuario = {
+        estado: resultado.estado,
+        turno: resultado.turno ?? null,
+      };
       setEventos((actuales) =>
         actuales.map((actual) =>
           actual.id === evento.id ? { ...actual, plazasDisponibles: resultado.plazasDisponibles } : actual,
@@ -101,18 +106,26 @@ function App() {
       setEventoSeleccionado((actual) =>
         actual?.id === evento.id ? { ...actual, plazasDisponibles: resultado.plazasDisponibles } : actual,
       );
-      setReservas((actuales) => ({ ...actuales, [evento.id]: resultado.estado }));
+      setReservas((actuales) => ({ ...actuales, [evento.id]: nuevaReserva }));
+      const textoTurno = formatearTurnoListaEspera(nuevaReserva.turno);
       setAviso({
         tipo: "exito",
         texto:
           resultado.estado === "confirmada"
             ? `Plaza confirmada para «${evento.titulo}».`
-            : `Aforo completo: estás en la lista de espera de «${evento.titulo}».`,
+            : textoTurno
+              ? `Reserva registrada como «En Espera» en «${evento.titulo}» (${textoTurno}).`
+              : `Reserva registrada como «En Espera» en «${evento.titulo}».`,
       });
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
-        setAviso({ tipo: "error", texto: "El aforo ha cambiado. Hemos actualizado las plazas disponibles." });
+        setAviso({
+          tipo: "error",
+          texto: error.message || "El aforo ha cambiado. Hemos actualizado las plazas disponibles.",
+        });
         await actualizarCatalogo();
+        const mapa = await cargarInscripcionesUsuario(USUARIO_DEMO);
+        setReservas((prev) => ({ ...prev, ...mapa }));
       } else {
         setAviso({
           tipo: "error",
@@ -271,7 +284,7 @@ function App() {
                 <BotonReserva
                   evento={eventoSeleccionado}
                   reservando={reservandoId === eventoSeleccionado.id}
-                  estadoReserva={reservas[eventoSeleccionado.id]}
+                  reserva={reservas[eventoSeleccionado.id]}
                   onReservar={() => void gestionarReserva(eventoSeleccionado)}
                 />
                 {reservas[eventoSeleccionado.id] && (
@@ -282,7 +295,13 @@ function App() {
                     onConfirmarCancelacion={gestionarCancelacion}
                   />
                 )}
-                <p className="nota-reserva">La confirmación se realiza en el momento.</p>
+                <p className="nota-reserva">
+                  {reservas[eventoSeleccionado.id]?.estado === "en_espera"
+                    ? "Estás en lista de espera por orden de llegada. Si alguien cancela, se asignará según el turno."
+                    : eventoSeleccionado.plazasDisponibles <= 0
+                      ? "Sin plazas libres. Puedes apuntarte a la lista de espera por orden de llegada."
+                      : "La confirmación se realiza en el momento."}
+                </p>
               </aside>
             </PanelAccionesEvento>
 
@@ -376,7 +395,7 @@ function App() {
                     key={evento.id}
                     evento={evento}
                     reservando={reservandoId === evento.id}
-                    estadoReserva={reservas[evento.id]}
+                    reserva={reservas[evento.id]}
                     onAbrir={() => { setScrollPrevio(window.scrollY); setEventoSeleccionado(evento); }}
                     onReservar={() => void gestionarReserva(evento)}
                     onConfirmarCancelacion={gestionarCancelacion}
@@ -440,47 +459,17 @@ function App() {
   );
 }
 
-function BotonReserva({
-  evento,
-  reservando,
-  estadoReserva,
-  onReservar,
-}: {
-  evento: Evento;
-  reservando: boolean;
-  estadoReserva?: EstadoReserva;
-  onReservar: () => void;
-}) {
-  const sinPlazas = evento.plazasDisponibles <= 0;
-  const inscrito = Boolean(estadoReserva);
-  const texto = reservando
-    ? "Reservando..."
-    : estadoReserva === "confirmada"
-      ? "Plaza confirmada"
-      : estadoReserva === "en_espera"
-        ? "En lista de espera"
-        : sinPlazas
-          ? "Aforo completo"
-          : "Reservar plaza";
-
-  return (
-    <button className="boton boton--primario boton--reserva" type="button" onClick={onReservar} disabled={reservando || sinPlazas || inscrito}>
-      {texto}
-    </button>
-  );
-}
-
 function TarjetaEvento({
   evento,
   reservando,
-  estadoReserva,
+  reserva,
   onAbrir,
   onReservar,
   onConfirmarCancelacion,
 }: {
   evento: Evento;
   reservando: boolean;
-  estadoReserva?: EstadoReserva;
+  reserva?: ReservaUsuario;
   onAbrir: () => void;
   onReservar: () => void;
   onConfirmarCancelacion?: (eventoId: string) => void;
@@ -508,9 +497,14 @@ function TarjetaEvento({
           </div>
         </div>
       </div>
+      {reserva && (
+        <div className="tarjeta-evento__estado-reserva">
+          <BotonReserva evento={evento} reservando={reservando} reserva={reserva} onReservar={onReservar} />
+        </div>
+      )}
       <div className="tarjeta-evento__acciones">
         <button className="boton boton--secundario" type="button" onClick={onAbrir}>Ver ficha</button>
-        {estadoReserva ? (
+        {reserva ? (
           <BotonCancelarInscripcion
             eventoId={evento.id}
             inicioIso={evento.inicio}
@@ -518,7 +512,7 @@ function TarjetaEvento({
             onConfirmarCancelacion={onConfirmarCancelacion}
           />
         ) : (
-          <BotonReserva evento={evento} reservando={reservando} estadoReserva={estadoReserva} onReservar={onReservar} />
+          <BotonReserva evento={evento} reservando={reservando} onReservar={onReservar} />
         )}
       </div>
     </article>

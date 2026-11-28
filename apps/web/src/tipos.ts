@@ -38,5 +38,11 @@ export type ResultadoReserva = {
   estado: EstadoReserva;
   creadaEn: string;
   plazasDisponibles: number;
+  turno?: number | null;
+};
+
+export type ReservaUsuario = {
+  estado: EstadoReserva;
+  turno?: number | null;
 };
 

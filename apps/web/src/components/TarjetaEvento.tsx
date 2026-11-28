@@ -3,11 +3,13 @@ import type { EstadoReserva, Evento } from '../tipos';
 import { NOMBRE_DEPORTE, estadoPlazas, fechaHora, textoCupo, textoInsignia } from '../formato';
 import { IconoCalendario, IconoLugar, IconoReserva } from './Iconos';
 import { BotonCancelarInscripcion } from './BotonCancelarInscripcion';
+import { IndicadorListaEspera } from './BotonReserva';
 
 export type TarjetaEventoProps = {
   evento: Evento;
   tieneReserva?: boolean;
   estadoReserva?: EstadoReserva;
+  turno?: number | null;
   onConfirmarCancelacion?: (eventoId: string) => void;
   onReservar?: () => void;
   onAbrir?: () => void;
@@ -19,6 +21,7 @@ export function TarjetaEvento({
   evento,
   tieneReserva,
   estadoReserva,
+  turno,
   onConfirmarCancelacion,
   onReservar,
   onAbrir,
@@ -30,6 +33,7 @@ export function TarjetaEvento({
   const ocupadas = evento.aforoMaximo - evento.plazasDisponibles;
   const porcentaje = Math.min(100, Math.max(0, Math.round((ocupadas / evento.aforoMaximo) * 100)));
   const usuarioInscrito = Boolean(tieneReserva || estadoReserva);
+  const sinPlazas = evento.plazasDisponibles <= 0;
 
   return (
     <article className="tarjeta">
@@ -84,13 +88,16 @@ export function TarjetaEvento({
 
       <div className="tarjeta__acciones">
         {usuarioInscrito ? (
-          <BotonCancelarInscripcion
-            eventoId={evento.id}
-            inicioIso={evento.inicio}
-            tituloEvento={evento.titulo}
-            onConfirmarCancelacion={onConfirmarCancelacion}
-            fechaReferencia={fechaReferencia}
-          />
+          <div className="tarjeta__acciones-inscrito">
+            {estadoReserva === 'en_espera' && <IndicadorListaEspera turno={turno} compacto />}
+            <BotonCancelarInscripcion
+              eventoId={evento.id}
+              inicioIso={evento.inicio}
+              tituloEvento={evento.titulo}
+              onConfirmarCancelacion={onConfirmarCancelacion}
+              fechaReferencia={fechaReferencia}
+            />
+          </div>
         ) : (
           <>
             <button
@@ -102,12 +109,21 @@ export function TarjetaEvento({
             </button>
             <button
               type="button"
-              className="boton boton--primario"
+              className={sinPlazas ? 'boton boton--lista-espera' : 'boton boton--primario'}
               onClick={onReservar}
-              disabled={reservando || evento.plazasDisponibles <= 0}
+              disabled={reservando}
+              aria-disabled={Boolean(reservando)}
             >
               <IconoReserva />
-              <span>{reservando ? 'Reservando...' : 'Reservar'}</span>
+              <span>
+                {reservando
+                  ? sinPlazas
+                    ? 'Apuntándome...'
+                    : 'Reservando...'
+                  : sinPlazas
+                    ? 'Apuntarme a lista de espera'
+                    : 'Reservar'}
+              </span>
             </button>
           </>
         )}
